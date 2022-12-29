@@ -38,6 +38,7 @@ ARCHITECTURE behavior OF I2SMaster_tb IS
     signal clk : STD_LOGIC := '0';
     signal din : STD_LOGIC := '0';
     signal data_ready : STD_LOGIC;
+    signal data_channel : std_ulogic;
     signal dout : signed (31 downto 0);
     signal ws : STD_LOGIC;
     signal clk_out : STD_LOGIC;
@@ -49,16 +50,19 @@ port map(
 	clk => clk,
 	din => din,
 	data_ready => data_ready,
+	data_channel => data_channel,
 	dout => dout,
 	ws => ws,
 	clk_out => clk_out
 );
 
-generate_input : process(clk_out)
+generate_input : process
 begin
-    if falling_edge(clk_out) then
-        din <= not din;
-    end if;
+    while en_sim = True loop
+		din <= not din;
+		wait for 4800ns;
+	end loop;
+	wait;
 end process;
 
 

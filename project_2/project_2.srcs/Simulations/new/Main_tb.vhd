@@ -39,6 +39,7 @@ ARCHITECTURE behavior OF Main_tb IS
     signal led : std_logic_vector(0 to 2);
     signal i2s_clk_out  :  std_logic;
     signal i2s_lrcl     :  std_logic;
+    signal i2s_din : std_ulogic := '0';
 BEGIN
 
 
@@ -48,7 +49,7 @@ port map(
 	sw => sw,
 	led => led,
 	RsTx => RsTx,
-	i2s_din => '0',
+	i2s_din => i2s_din,
 	i2s_clk_out => i2s_clk_out,
 	i2s_lrcl => i2s_lrcl
 );
@@ -61,6 +62,18 @@ begin
 		clk <= not clk;
 	end loop;
 	wait;
+end process;
+
+din: process(clk)
+variable counter : natural range 0 to 3;
+begin
+    if rising_edge(clk) then
+        if counter = 3 then
+            counter := 0;
+            i2s_din <= not i2s_din;
+        end if;
+        counter := counter + 1;
+    end if;
 end process;
 
     --simulation : process

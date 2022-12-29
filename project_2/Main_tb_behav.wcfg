@@ -10,64 +10,41 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
-      <ZoomEndTime time="26.300001 us"></ZoomEndTime>
-      <Cursor1Time time="16.220000 us"></Cursor1Time>
+      <ZoomStartTime time="4.175000 us"></ZoomStartTime>
+      <ZoomEndTime time="72.725001 us"></ZoomEndTime>
+      <Cursor1Time time="19.575000 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="276"></NameColumnWidth>
-      <ValueColumnWidth column_width="80"></ValueColumnWidth>
+      <NameColumnWidth column_width="216"></NameColumnWidth>
+      <ValueColumnWidth column_width="84"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="12" />
-   <wvobject fp_name="/I2SMaster_tb/clk" type="logic">
-      <obj_property name="ElementShortName">clk</obj_property>
-      <obj_property name="ObjectShortName">clk</obj_property>
-   </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/clk_out" type="logic">
+   <WVObjectSize size="7" />
+   <wvobject fp_name="/I2SMaster_tb/DUT/clk_out" type="logic">
       <obj_property name="ElementShortName">clk_out</obj_property>
       <obj_property name="ObjectShortName">clk_out</obj_property>
    </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/DUT/wsinternal" type="logic">
-      <obj_property name="ElementShortName">wsinternal</obj_property>
-      <obj_property name="ObjectShortName">wsinternal</obj_property>
-   </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/ws" type="logic">
-      <obj_property name="ElementShortName">ws</obj_property>
-      <obj_property name="ObjectShortName">ws</obj_property>
-   </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/din" type="logic">
-      <obj_property name="ElementShortName">din</obj_property>
-      <obj_property name="ObjectShortName">din</obj_property>
-   </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/data_ready" type="logic">
+   <wvobject fp_name="/I2SMaster_tb/DUT/data_ready" type="logic">
       <obj_property name="ElementShortName">data_ready</obj_property>
       <obj_property name="ObjectShortName">data_ready</obj_property>
    </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/DUT/data_re_internal" type="logic">
-      <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="ElementShortName">data_re_internal</obj_property>
-      <obj_property name="ObjectShortName">data_re_internal</obj_property>
-      <obj_property name="label">data_ready_internal</obj_property>
+   <wvobject fp_name="/I2SMaster_tb/DUT/ws" type="logic">
+      <obj_property name="ElementShortName">ws</obj_property>
+      <obj_property name="ObjectShortName">ws</obj_property>
    </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/dout" type="array">
-      <obj_property name="ElementShortName">dout[31:0]</obj_property>
-      <obj_property name="ObjectShortName">dout[31:0]</obj_property>
-      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   <wvobject fp_name="/I2SMaster_tb/DUT/data_channel" type="logic">
+      <obj_property name="ElementShortName">data_channel</obj_property>
+      <obj_property name="ObjectShortName">data_channel</obj_property>
    </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/DUT/i2sclk" type="logic">
-      <obj_property name="ElementShortName">i2sclk</obj_property>
-      <obj_property name="ObjectShortName">i2sclk</obj_property>
-   </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/DUT/i2sclk_d" type="logic">
-      <obj_property name="ElementShortName">i2sclk_d</obj_property>
-      <obj_property name="ObjectShortName">i2sclk_d</obj_property>
+   <wvobject fp_name="/I2SMaster_tb/DUT/din" type="logic">
+      <obj_property name="ElementShortName">din</obj_property>
+      <obj_property name="ObjectShortName">din</obj_property>
    </wvobject>
    <wvobject fp_name="/I2SMaster_tb/DUT/ws_changed" type="logic">
       <obj_property name="ElementShortName">ws_changed</obj_property>
       <obj_property name="ObjectShortName">ws_changed</obj_property>
    </wvobject>
-   <wvobject fp_name="/I2SMaster_tb/DUT/i2sclk_fe" type="logic">
-      <obj_property name="ElementShortName">i2sclk_fe</obj_property>
-      <obj_property name="ObjectShortName">i2sclk_fe</obj_property>
+   <wvobject fp_name="/I2SMaster_tb/DUT/dout" type="array">
+      <obj_property name="ElementShortName">dout[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dout[31:0]</obj_property>
    </wvobject>
 </wave_config>

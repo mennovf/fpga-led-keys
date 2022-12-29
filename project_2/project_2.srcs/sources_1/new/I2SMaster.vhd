@@ -35,9 +35,10 @@ entity I2SMaster is
     Port ( clk : in STD_LOGIC;
            din : in STD_LOGIC;
            data_ready : out STD_LOGIC  := '0'; -- High for a single clk cycle
-           dout : out signed (31 downto 0);
+           dout : out signed (31 downto 0) := (others=>'0');
            ws : out STD_LOGIC := '0';
-           clk_out : out STD_LOGIC := '0');
+           clk_out : out STD_LOGIC := '0';
+           data_channel : out std_ulogic := '0');
 end I2SMaster;
 
 architecture Behavioral of I2SMaster is
@@ -68,11 +69,11 @@ begin
 end process;
 
 generate_ws: process(clk)
-variable counter : natural range 0 to 63 := 0;
+variable counter : natural range 0 to 31 := 0;
 begin
     if rising_edge(clk) then
         if i2sclk_fe = '1' then
-            if counter = 63 then
+            if counter = 31 then
                 counter := 0;
                 wsinternal <= not wsinternal;
                 
@@ -94,12 +95,16 @@ begin
     if rising_edge(clk) then
         if i2sclk_fe = '1' then
             if wsinternal = '0' then
+                -- This will start one falling edge AFTER wsinternal has been set to low.
+                -- This is because it takes one rising_edge(clk) for wsinternal <= '0' to propagate to this process
+                -- Once it has propagated, i2sclk_fe is no longer ='1' and we'll have to wait until the next i2sclk_fe
                 shift <= shift(30 downto 0) & din;
             end if;
             
             if ws_changed = '1' then
                 dout <= shift;
                 data_ready_internal <= '1';
+                data_channel <= not wsinternal;
             end if;
         end if;
         

@@ -61,7 +61,7 @@ signal in_conversion : std_logic := '0';
 
 begin
 
-process(clk, convert)
+process(clk, convert, in_conversion)
 variable idx : natural;
 variable temp : CHAR_ARRAY(0 to result'right);
 variable reduced : integer;
