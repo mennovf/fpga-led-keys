@@ -36,7 +36,7 @@ ARCHITECTURE behavior OF Main_tb IS
 	
 	signal en_sim : boolean := True;
     signal sw, RsTx : std_logic;
-    signal led : std_logic_vector(0 to 2);
+    signal led : std_logic_vector(0 to 15);
     signal i2s_clk_out  :  std_logic;
     signal i2s_lrcl     :  std_logic;
     signal i2s_din : std_ulogic := '0';

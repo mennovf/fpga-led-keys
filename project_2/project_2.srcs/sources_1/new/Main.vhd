@@ -107,20 +107,47 @@ signal audio_sample : std_logic_vector (17 downto 0) := "010101010101010101";
 
 
 -- FFT
-signal fft_s_axis_config_tdata : std_logic_vector ( 7 downto 0 );
-signal fft_s_axis_config_tvalid : std_logic;
-signal fft_s_axis_config_tready : std_logic;
-signal fft_s_axis_data_tdata : std_logic_vector ( 47 downto 0 );
-signal fft_s_axis_data_tvalid : std_logic;
-signal fft_s_axis_data_tready : std_logic;
-signal fft_s_axis_data_tlast : std_logic;
-signal fft_m_axis_data_tdata : std_logic_vector ( 63 downto 0 );
-signal fft_m_axis_data_tvalid : std_logic;
-signal fft_m_axis_data_tlast : std_logic;
-signal fft_event_frame_started : std_logic;
-signal fft_event_tlast_unexpected : std_logic;
-signal fft_event_tlast_missing : std_logic;
-signal fft_event_data_in_channel_halt : std_logic;
+    -- Config slave channel signals
+    signal fft_s_axis_config_tvalid        : std_logic := '0';  -- payload is valid
+    signal fft_s_axis_config_tready        : std_logic := '0';  -- slave is ready
+    signal fft_s_axis_config_tdata         : std_logic_vector(7 downto 0) := (others => '0');  -- data payload
+    
+    -- Data slave channel signals
+    signal fft_s_axis_data_tvalid          : std_logic := '0';  -- payload is valid
+    signal fft_s_axis_data_tready          : std_logic := '0';  -- slave is ready
+    signal fft_s_axis_data_tdata           : std_logic_vector(47 downto 0) := (others => '0');  -- data payload
+    signal fft_s_axis_data_tlast           : std_logic := '0';  -- indicates end of packet
+    
+    -- Data master channel signals
+    signal fft_m_axis_data_tvalid          : std_logic := '0';  -- payload is valid
+    signal fft_m_axis_data_tdata           : std_logic_vector(63 downto 0) := (others => '0');  -- data payload
+    signal fft_m_axis_data_tlast           : std_logic := '0';  -- indicates end of packet
+    
+    -- Event signals
+    signal fft_event_frame_started         : std_logic := '0';
+    signal fft_event_tlast_unexpected      : std_logic := '0';
+    signal fft_event_tlast_missing         : std_logic := '0';
+    signal fft_event_data_in_channel_halt  : std_logic := '0';
+    
+    constant FFT_WIDTH    : integer := 18;
+    constant FFT_MAX_SAMPLES : integer := 2**10;  -- maximum number of samples in a frame
+
+    subtype Magnitude is signed(FFT_WIDTH*2 downto 0);
+    type FFTMagnitudes is array (0 to FFT_MAX_SAMPLES) of Magnitude;
+    signal fft_mag_output : FFTMagnitudes;
+
+-- DEBUG
+signal fft_feed_counter : natural := 0;
+ -- Config slave channel alias signals
+  signal s_axis_config_tdata_fwd_inv      : std_logic                    := '0';              -- forward or inverse
+
+  -- Data slave channel alias signals
+  signal s_axis_data_tdata_re             : std_logic_vector(17 downto 0) := (others => '0');  -- real data
+  signal s_axis_data_tdata_im             : std_logic_vector(17 downto 0) := (others => '0');  -- imaginary data
+
+  -- Data master channel alias signals
+  signal m_axis_data_tdata_re             : std_logic_vector(28 downto 0) := (others => '0');  -- real data
+  signal m_axis_data_tdata_im             : std_logic_vector(28 downto 0) := (others => '0');  -- imaginary data
 
 
 
@@ -177,6 +204,76 @@ fft : entity work.fft port map (
     event_tlast_missing => fft_event_tlast_missing,
     event_data_in_channel_halt => fft_event_data_in_channel_halt
 );
+
+
+
+----------------------------------------------------------
+------               FFT Processes                 -------
+----------------------------------------------------------
+
+fft_feed: process(clk)
+variable counter : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
+variable sample : std_logic_vector(17 downto 0);
+variable rec : std_logic_vector(fft_s_axis_data_tdata'range);
+
+begin
+    if rising_edge(clk) then
+        if fft_s_axis_data_tready = '1' then
+            sample := std_logic_vector(i2s_sample_out(17 downto 0));
+            sample := "000000000000000011";
+            rec(FFT_WIDTH-1 downto 0) := sample;
+            rec(23 downto FFT_WIDTH) := (others => sample(17));
+            rec(rec'high downto (rec'high+1)/2) := (others => '0');
+            
+            fft_s_axis_data_tdata <= rec;
+            fft_s_axis_data_tvalid <= '1';
+            
+            if counter = FFT_MAX_SAMPLES-1 then
+                fft_s_axis_data_tlast <= '1';
+                counter := 0;
+            else                   
+                counter := counter + 1;
+                fft_s_axis_data_tlast <= '0';
+            end if;
+        end if;
+    end if;
+    fft_feed_counter <= counter;
+end process;
+
+fft_unload: process (clk)
+    variable index : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
+    variable sample_re : signed(FFT_WIDTH-1 downto 0);
+    variable sample_im : signed(FFT_WIDTH-1 downto 0);
+begin
+    if rising_edge(clk) then
+        if fft_m_axis_data_tvalid = '1' then
+            sample_re(17 downto 0) := signed(fft_m_axis_data_tdata(28 downto 11));
+            sample_re(sample_re'high downto 18) := (others => sample_re(17));
+            sample_im(17 downto 0) := signed(fft_m_axis_data_tdata(60 downto 43));
+            sample_im(sample_im'high downto 18) := (others => sample_im(17));
+            
+            fft_mag_output(index) <= resize(sample_re*sample_re, Magnitude'high + 1) + resize(sample_im*sample_im,  Magnitude'high + 1);
+            
+            if index = FFT_MAX_SAMPLES-1 then
+                index := 0;
+            else
+                index := index + 1;
+            end if;
+        end if;
+    end if;
+end process;
+
+
+-- Config slave channel alias signals
+  s_axis_config_tdata_fwd_inv    <= fft_s_axis_config_tdata(0);
+
+  -- Data slave channel alias signals
+  s_axis_data_tdata_re           <= fft_s_axis_data_tdata(17 downto 0);
+  s_axis_data_tdata_im           <= fft_s_axis_data_tdata(41 downto 24);
+
+  -- Data master channel alias signals
+  m_axis_data_tdata_re           <= fft_m_axis_data_tdata(28 downto 0);
+  m_axis_data_tdata_im           <= fft_m_axis_data_tdata(60 downto 32);
 
 
 ----------------------------------------------------------
