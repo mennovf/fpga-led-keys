@@ -7,110 +7,35 @@
          <top_modules>
             <top_module name="Main_tb" />
             <top_module name="ascii" />
+            <top_module name="led" />
             <top_module name="vcomponents" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="21,751.167 ns"></ZoomStartTime>
-      <ZoomEndTime time="21,820.518 ns"></ZoomEndTime>
-      <Cursor1Time time="21,770.067 ns"></Cursor1Time>
+      <ZoomStartTime time="192.594266 us"></ZoomStartTime>
+      <ZoomEndTime time="673.279267 us"></ZoomEndTime>
+      <Cursor1Time time="270.812239 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="216"></NameColumnWidth>
-      <ValueColumnWidth column_width="68"></ValueColumnWidth>
+      <NameColumnWidth column_width="223"></NameColumnWidth>
+      <ValueColumnWidth column_width="96"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="23" />
-   <wvobject fp_name="/Main_tb/DUT/clk" type="logic">
-      <obj_property name="ElementShortName">clk</obj_property>
-      <obj_property name="ObjectShortName">clk</obj_property>
+   <WVObjectSize size="4" />
+   <wvobject fp_name="/Main_tb/led_dout" type="logic">
+      <obj_property name="ElementShortName">led_dout</obj_property>
+      <obj_property name="ObjectShortName">led_dout</obj_property>
    </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/s_axis_config_tdata" type="array">
-      <obj_property name="ElementShortName">s_axis_config_tdata[7:0]</obj_property>
-      <obj_property name="ObjectShortName">s_axis_config_tdata[7:0]</obj_property>
+   <wvobject fp_name="/Main_tb/DUT/led_strip/send" type="logic">
+      <obj_property name="ElementShortName">send</obj_property>
+      <obj_property name="ObjectShortName">send</obj_property>
    </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/s_axis_config_tvalid" type="logic">
-      <obj_property name="ElementShortName">s_axis_config_tvalid</obj_property>
-      <obj_property name="ObjectShortName">s_axis_config_tvalid</obj_property>
+   <wvobject fp_name="/Main_tb/DUT/led_strip/ready" type="logic">
+      <obj_property name="ElementShortName">ready</obj_property>
+      <obj_property name="ObjectShortName">ready</obj_property>
    </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/s_axis_config_tready" type="logic">
-      <obj_property name="ElementShortName">s_axis_config_tready</obj_property>
-      <obj_property name="ObjectShortName">s_axis_config_tready</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/s_axis_data_tdata" type="array">
-      <obj_property name="ElementShortName">s_axis_data_tdata[47:0]</obj_property>
-      <obj_property name="ObjectShortName">s_axis_data_tdata[47:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/s_axis_data_tvalid" type="logic">
-      <obj_property name="ElementShortName">s_axis_data_tvalid</obj_property>
-      <obj_property name="ObjectShortName">s_axis_data_tvalid</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft_s_axis_data_tvalid" type="logic">
-      <obj_property name="ElementShortName">fft_s_axis_data_tvalid</obj_property>
-      <obj_property name="ObjectShortName">fft_s_axis_data_tvalid</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/s_axis_data_tready" type="logic">
-      <obj_property name="ElementShortName">s_axis_data_tready</obj_property>
-      <obj_property name="ObjectShortName">s_axis_data_tready</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/s_axis_data_tlast" type="logic">
-      <obj_property name="ElementShortName">s_axis_data_tlast</obj_property>
-      <obj_property name="ObjectShortName">s_axis_data_tlast</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/m_axis_data_tdata" type="array">
-      <obj_property name="ElementShortName">m_axis_data_tdata[63:0]</obj_property>
-      <obj_property name="ObjectShortName">m_axis_data_tdata[63:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/m_axis_data_tvalid" type="logic">
-      <obj_property name="ElementShortName">m_axis_data_tvalid</obj_property>
-      <obj_property name="ObjectShortName">m_axis_data_tvalid</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/m_axis_data_tlast" type="logic">
-      <obj_property name="ElementShortName">m_axis_data_tlast</obj_property>
-      <obj_property name="ObjectShortName">m_axis_data_tlast</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/event_frame_started" type="logic">
-      <obj_property name="ElementShortName">event_frame_started</obj_property>
-      <obj_property name="ObjectShortName">event_frame_started</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/event_tlast_unexpected" type="logic">
-      <obj_property name="ElementShortName">event_tlast_unexpected</obj_property>
-      <obj_property name="ObjectShortName">event_tlast_unexpected</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/event_tlast_missing" type="logic">
-      <obj_property name="ElementShortName">event_tlast_missing</obj_property>
-      <obj_property name="ObjectShortName">event_tlast_missing</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft/event_data_in_channel_halt" type="logic">
-      <obj_property name="ElementShortName">event_data_in_channel_halt</obj_property>
-      <obj_property name="ObjectShortName">event_data_in_channel_halt</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft_mag_output" type="array">
-      <obj_property name="ElementShortName">fft_mag_output[0:1024][36:0]</obj_property>
-      <obj_property name="ObjectShortName">fft_mag_output[0:1024][36:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft_feed_counter" type="other">
-      <obj_property name="ElementShortName">fft_feed_counter</obj_property>
-      <obj_property name="ObjectShortName">fft_feed_counter</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/s_axis_config_tdata_fwd_inv" type="logic">
-      <obj_property name="ElementShortName">s_axis_config_tdata_fwd_inv</obj_property>
-      <obj_property name="ObjectShortName">s_axis_config_tdata_fwd_inv</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/s_axis_data_tdata_re" type="array">
-      <obj_property name="ElementShortName">s_axis_data_tdata_re[17:0]</obj_property>
-      <obj_property name="ObjectShortName">s_axis_data_tdata_re[17:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/s_axis_data_tdata_im" type="array">
-      <obj_property name="ElementShortName">s_axis_data_tdata_im[17:0]</obj_property>
-      <obj_property name="ObjectShortName">s_axis_data_tdata_im[17:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/m_axis_data_tdata_re" type="array">
-      <obj_property name="ElementShortName">m_axis_data_tdata_re[28:0]</obj_property>
-      <obj_property name="ObjectShortName">m_axis_data_tdata_re[28:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/m_axis_data_tdata_im" type="array">
-      <obj_property name="ElementShortName">m_axis_data_tdata_im[28:0]</obj_property>
-      <obj_property name="ObjectShortName">m_axis_data_tdata_im[28:0]</obj_property>
+   <wvobject fp_name="/Main_tb/DUT/led_strip/leds" type="array">
+      <obj_property name="ElementShortName">leds[0:2]</obj_property>
+      <obj_property name="ObjectShortName">leds[0:2]</obj_property>
    </wvobject>
 </wave_config>

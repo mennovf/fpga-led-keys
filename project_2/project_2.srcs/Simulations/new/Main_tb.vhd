@@ -40,6 +40,7 @@ ARCHITECTURE behavior OF Main_tb IS
     signal i2s_clk_out  :  std_logic;
     signal i2s_lrcl     :  std_logic;
     signal i2s_din : std_ulogic := '0';
+    signal led_dout : std_logic := '0';
 BEGIN
 
 
@@ -51,7 +52,8 @@ port map(
 	RsTx => RsTx,
 	i2s_din => i2s_din,
 	i2s_clk_out => i2s_clk_out,
-	i2s_lrcl => i2s_lrcl
+	i2s_lrcl => i2s_lrcl,
+	led_dout => led_dout
 );
 
 

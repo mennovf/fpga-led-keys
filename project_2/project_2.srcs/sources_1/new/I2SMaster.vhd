@@ -51,16 +51,16 @@ signal ws_changed : std_logic := '0'; --One extra clock of latency
 signal data_ready_internal : std_logic := '0';
 begin
 
--- Generate a 4MHz clock for the I2S device
+-- Generate a 2.5MHz clock for the I2S device
 generate_clk: process (clk)
-variable counter : natural range 0 to 25 := 0;
+variable counter : natural range 0 to 39 := 0;
 begin
     if rising_edge(clk) then
-        if counter = 24 then
+        if counter = 39 then
             counter := 0;
             i2sclk <= '0';
         else
-            if counter = 13 then
+            if counter = 19 then
                 i2sclk <= '1';
             end if;
             counter := counter + 1;
