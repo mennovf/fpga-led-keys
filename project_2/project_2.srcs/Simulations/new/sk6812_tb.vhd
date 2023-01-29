@@ -62,10 +62,10 @@ port map(
 );
 
 generate_input : process
-constant RED   : Color := (r => (others => '1'), g => (others => '0'), b => (others => '0'));
-constant GREEN : Color := (r => (others => '0'), g => (others => '1'), b => (others => '0'));
-constant BLUE  : Color := (r => (others => '0'), g => (others => '0'), b => (others => '1'));
-constant ORDER : Color := (r => "00000001", g => "00000010", b => "00000100");
+constant RED   : Color := (r => (others => '1'), g => (others => '0'), b => (others => '0'), w => (others => '0'));
+constant GREEN : Color := (r => (others => '0'), g => (others => '1'), b => (others => '0'), w => (others => '0'));
+constant BLUE  : Color := (r => (others => '0'), g => (others => '0'), b => (others => '1'), w => (others => '0'));
+constant ORDER : Color := (r => "00000001", g => "00000010", b => "00000100", w => (others => '0'));
 
 begin
     while en_sim loop

@@ -91,15 +91,6 @@ signal uart_tx : std_logic;
 --Current uart state signal
 signal uart_state : UART_STATE_TYPE := WAIT_SEND;
 
-
---- Asciifier
-signal ascii_input : integer;
-signal ascii_converting : std_logic;
-signal ascii_convert : std_logic := '0';
-signal ascii_result : CHAR_ARRAY(0 to 10);
-signal ascii_len : natural := 0;
-
-
 -- I2S
 signal i2s_data_ready : STD_LOGIC  := '0';
 signal i2s_sample_out : signed (31 downto 0);
@@ -133,18 +124,23 @@ signal fft_event_data_in_channel_halt  : std_logic := '0';
 
 constant FFT_WIDTH    : integer := 18;
 constant FFT_MAX_SAMPLES : integer := 2**11;  -- maximum number of samples in a frame
+constant START_FREQUENCY_INDEX : natural := 5;
 
 subtype Magnitude is signed(FFT_WIDTH*2 downto 0);
 type FFTMagnitudes is array (0 to FFT_MAX_SAMPLES) of Magnitude;
-signal fft_mag_output : FFTMagnitudes;
-    
+signal fft_mag_output : Magnitude;
+signal fft_mag_outputted : std_ulogic := '0';
+
     
     
 -- LED Strip
-constant N_LEDS : integer := 3;
-signal leds : led_array(0 to N_LEDS - 1) := ((r => (others => '1'), g => (others => '0'), b => (others => '0'), w => (others => '0')), (r => (others => '0'), g => (others => '1'), b => (others => '0'), w => (others => '0')), (r => (others => '0'), g => (others => '0'), b => (others => '1'), w => (others => '0')));
+constant N_LEDS : integer := 144;
+signal leds : led_array(0 to N_LEDS - 1) := ((r => (others => '1'), g => (others => '0'), b => (others => '0'), w => (others => '0')), (r => (others => '0'), g => (others => '1'), b => (others => '0'), w => (others => '0')), (r => (others => '0'), g => (others => '0'), b => (others => '1'), w => (others => '0')), 
+others=>(others=>(others=>'0')));
 signal led_ready : std_logic;
 signal led_send : std_logic;
+
+
 
 -- DEBUG
 signal fft_feed_counter : natural := 0;
@@ -169,14 +165,6 @@ signal m_axis_data_tdata_im             : std_logic_vector(28 downto 0) := (othe
 -----------------------------------------------------------
 begin
 
-asciifier: entity work.AsciiConverter port map (
-    input => ascii_input,
-    converting => ascii_converting,
-    convert => ascii_convert,
-    clk => clk,
-    result => ascii_result,
-    length => ascii_len
-);
 
 uart : entity work.UART_TX_CTRL port map (
     SEND => uart_send,
@@ -237,16 +225,16 @@ port map (
 ----------------------------------------------------------
 
 feed_leds : process(clk)
-variable counter : natural range 0 to 100000000;
+variable counter : natural range 0 to 10000000;
 begin
     if rising_edge(clk) then
         led_send <= '1' when led_ready = '1' else '0';
         
-        if led_ready = '1' and counter = 100000000 then
-            leds <= leds(1 to 2) & leds(0);
+        if led_ready = '1' and counter = 10000000 then
+            leds <= leds(1 to N_LEDS - 1) & leds(0);
             counter := 0;
         else
-            if counter < 100000000 then
+            if counter < 10000000 then
                 counter := counter + 1;
             end if;
         end if;
@@ -265,8 +253,8 @@ variable rec : std_logic_vector(fft_s_axis_data_tdata'range);
 begin
     if rising_edge(clk) then
         if fft_s_axis_data_tready = '1' then
-            --sample := std_logic_vector(i2s_sample_out(17 downto 0));
-            sample := "000000000111110100" when sample /= "000000000111110100" else "111111111000001100";
+            sample := std_logic_vector(i2s_sample_out(17 downto 0));
+            --sample := "000000000111110100" when sample /= "000000000111110100" else "111111111000001100";
             rec(FFT_WIDTH-1 downto 0) := sample;
             rec(23 downto FFT_WIDTH) := (others => sample(17));
             rec(rec'high downto (rec'high+1)/2) := (others => '0');
@@ -290,13 +278,6 @@ fft_unload: process (clk)
     variable index : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
     variable sample_re : signed(FFT_WIDTH-1 downto 0);
     variable sample_im : signed(FFT_WIDTH-1 downto 0);
-    variable sample_mag : Magnitude;
-    
-    variable max_freq_index : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
-    variable max_freq_magnitude : Magnitude := (others=>'0');
-    variable max_freq_index_bits : std_logic_vector(15 downto 0);
-    
-    constant START_INDEX : natural := 5;
 begin
     if rising_edge(clk) then
         if fft_m_axis_data_tvalid = '1' then
@@ -306,36 +287,64 @@ begin
             sample_im(sample_im'high downto 18) := (others => sample_im(17));
             
 
-            sample_mag := resize(sample_re*sample_re, Magnitude'high + 1) + resize(sample_im*sample_im,  Magnitude'high + 1);
-            fft_mag_output(index) <= sample_mag;
-            
-            if index > START_INDEX and index <= FFT_MAX_SAMPLES / 2 and sample_mag > max_freq_magnitude then
-                max_freq_magnitude := sample_mag;
-                max_freq_index := index;
-                fft_max_index <= max_freq_index;
-                fft_max_value <= max_freq_magnitude;
-            end if;
-            
+            fft_mag_output <= resize(sample_re*sample_re, Magnitude'high + 1) + resize(sample_im*sample_im,  Magnitude'high + 1);
+            fft_mag_outputted <= '1';
+
+
             if index = FFT_MAX_SAMPLES-1 then
                 index := 0;
-                
-                -- Send the max index over uart
-                if uart_state = WAIT_SEND then
-                    max_freq_index_bits := std_logic_vector(to_unsigned(max_freq_index, 16));
-                    uart_str(0) <= max_freq_index_bits(15 downto 8);
-                    uart_str(1) <= max_freq_index_bits(7 downto 0);
-                    strEnd <= 2;
-                    uart_str_send <= '1';
-                end if;
-                max_freq_index := START_INDEX;
-                max_freq_magnitude := (others=>'0');
-                
             else
                 index := index + 1;
+            end if;            
+        else
+            fft_mag_outputted <= '0';
+        end if;
+        fft_unload_counter <= index;
+    end if;
+end process;
+
+
+freq_max: process(clk)
+
+variable max_freq_index : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
+variable max_freq_magnitude : Magnitude := (others=>'0');
+variable max_freq_index_bits : std_logic_vector(15 downto 0);
+variable d : std_ulogic := '0';
+begin
+    if rising_edge(clk) then
+        if fft_unload_counter = 1025 then
+            d := '1';
+        end if;
+        if fft_mag_outputted = '1' and fft_unload_counter > START_FREQUENCY_INDEX and fft_unload_counter <= FFT_MAX_SAMPLES / 2 + 1 then
+            if fft_mag_output > max_freq_magnitude then
+                max_freq_magnitude := fft_mag_output;
+                max_freq_index := fft_unload_counter;
             end if;
         end if;
+        
+        
+        if fft_unload_counter = 0 then            
+            -- Send the max index over uart
+            if uart_state = WAIT_SEND then
+                max_freq_index_bits := std_logic_vector(to_unsigned(max_freq_index, 16));
+                uart_str(0) <= max_freq_index_bits(15 downto 8);
+                uart_str(1) <= max_freq_index_bits(7 downto 0);
+                strEnd <= 2;
+                uart_str_send <= '1';
+            end if;
+            
+            max_freq_index := START_FREQUENCY_INDEX;
+            max_freq_magnitude := (others=>'0');
+        end if;
+        
+        if uart_state /= WAIT_SEND then
+            uart_str_send <= '0';
+        end if;
+        
+    
+        fft_max_index <= max_freq_index;
+        fft_max_value <= max_freq_magnitude;
     end if;
-    fft_unload_counter <= index;
 end process;
 
 
@@ -388,57 +397,6 @@ end process;
 --    end if;    
 --end process;
 
-----------------------------------------------------------
-------              Ascii Control                  -------
-----------------------------------------------------------
-
--- process (clk) 
--- variable counter : integer := 0; 
--- type WaitState is (SoC, EoC, SoTX, EoTX); 
--- variable wait_state : WaitState := EoTX; 
--- begin 
---     if rising_edge(clk) then        
---         case wait_state is 
---             when SoC => 
---                 if ascii_converting = '1' then 
---                     ascii_convert <= '0'; 
---                     wait_state := EoC; 
---                 end if; 
---             when EoC => 
---                 if ascii_converting = '0' then 
---                     wait_state := SoTX; 
---                     uart_str(0 to ascii_result'high) <= ascii_result; 
---              
---                     for i in uart_str'range loop 
---                         if i = ascii_len then 
---                             uart_str(i) <= X"0A"; 
---                         end if; 
---                         if i = ascii_len + 1 then 
---                             uart_str(i) <= X"0D"; 
---                         end if; 
---                     end loop; 
---                     strEnd <= ascii_len + 2; 
---                     uart_str_send <= '1'; 
---                 end if; 
---             when SoTX => 
--- 		        if uart_state /= WAIT_SEND then 
---                     wait_state := EoTX;                     
---                     uart_str_send <= '0'; 
---                 end if; 
---             when EoTX => 
---                 if uart_state = WAIT_SEND then 
---                     ascii_input <= counter; 
---                     ascii_convert <= '1'; 
---                     counter := counter + 1; 
---                     if counter > 100 then 
---                         counter := -100; 
---                     end if; 
---                     wait_state := SoC; 
---                 end if; 
---         end case; 
---     end if;     
--- end process; 
-
 
 ----------------------------------------------------------
 ------              UART Control                   -------
@@ -466,8 +424,6 @@ begin
             if (uart_str_send = '1') then
                 uart_state <= SEND_CHAR;
             end if;
-        when others=> --should never be reached
-            uart_state <= WAIT_SEND;
         end case;
 	end if;
 end process;
