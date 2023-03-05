@@ -3,72 +3,29 @@
    <wave_state>
    </wave_state>
    <db_ref_list>
-      <db_ref path="Main_tb_behav.wdb" id="1">
+      <db_ref path="I2SMaster_tb_behav.wdb" id="1">
          <top_modules>
-            <top_module name="Main_tb" />
-            <top_module name="ascii" />
+            <top_module name="I2SMaster_tb" />
             <top_module name="glbl" />
-            <top_module name="led" />
-            <top_module name="vcomponents" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="956,199.400 ns"></ZoomStartTime>
-      <ZoomEndTime time="956,336.601 ns"></ZoomEndTime>
-      <Cursor1Time time="956,300.400 ns"></Cursor1Time>
+      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
+      <ZoomEndTime time="100.000001 us"></ZoomEndTime>
+      <Cursor1Time time="12.608696 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="212"></NameColumnWidth>
-      <ValueColumnWidth column_width="87"></ValueColumnWidth>
+      <ValueColumnWidth column_width="79"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="12" />
-   <wvobject fp_name="/Main_tb/DUT/led_strip/send" type="logic">
-      <obj_property name="ElementShortName">send</obj_property>
-      <obj_property name="ObjectShortName">send</obj_property>
+   <WVObjectSize size="2" />
+   <wvobject fp_name="/I2SMaster_tb/data_ready" type="logic">
+      <obj_property name="ElementShortName">data_ready</obj_property>
+      <obj_property name="ObjectShortName">data_ready</obj_property>
    </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/led_strip/ready" type="logic">
-      <obj_property name="ElementShortName">ready</obj_property>
-      <obj_property name="ObjectShortName">ready</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/led_strip/leds" type="array">
-      <obj_property name="ElementShortName">leds[0:143]</obj_property>
-      <obj_property name="ObjectShortName">leds[0:143]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft_max_index" type="other">
-      <obj_property name="ElementShortName">fft_max_index</obj_property>
-      <obj_property name="ObjectShortName">fft_max_index</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft_unload_counter" type="other">
-      <obj_property name="ElementShortName">fft_unload_counter</obj_property>
-      <obj_property name="ObjectShortName">fft_unload_counter</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft_max_value" type="array">
-      <obj_property name="ElementShortName">fft_max_value[36:0]</obj_property>
-      <obj_property name="ObjectShortName">fft_max_value[36:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/fft_mag_outputted" type="logic">
-      <obj_property name="ElementShortName">fft_mag_outputted</obj_property>
-      <obj_property name="ObjectShortName">fft_mag_outputted</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/uart_state" type="other">
-      <obj_property name="ElementShortName">uart_state</obj_property>
-      <obj_property name="ObjectShortName">uart_state</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/RsTx" type="logic">
-      <obj_property name="ElementShortName">RsTx</obj_property>
-      <obj_property name="ObjectShortName">RsTx</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/uart/READY" type="logic">
-      <obj_property name="ElementShortName">READY</obj_property>
-      <obj_property name="ObjectShortName">READY</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/strIndex" type="other">
-      <obj_property name="ElementShortName">strIndex</obj_property>
-      <obj_property name="ObjectShortName">strIndex</obj_property>
-   </wvobject>
-   <wvobject fp_name="/Main_tb/DUT/uart_send" type="logic">
-      <obj_property name="ElementShortName">uart_send</obj_property>
-      <obj_property name="ObjectShortName">uart_send</obj_property>
+   <wvobject fp_name="/I2SMaster_tb/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
    </wvobject>
 </wave_config>

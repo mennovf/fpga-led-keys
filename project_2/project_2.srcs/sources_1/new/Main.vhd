@@ -127,7 +127,7 @@ constant FFT_MAX_SAMPLES : integer := 2**11;  -- maximum number of samples in a 
 constant START_FREQUENCY_INDEX : natural := 5;
 
 subtype Magnitude is signed(FFT_WIDTH*2 downto 0);
-type FFTMagnitudes is array (0 to FFT_MAX_SAMPLES) of Magnitude;
+type FFTMagnitudes is array (0 to FFT_MAX_SAMPLES -1) of Magnitude;
 signal fft_mag_output : Magnitude;
 signal fft_mag_outputted : std_ulogic := '0';
 
@@ -143,10 +143,18 @@ signal led_send : std_logic;
 
 
 -- DEBUG
+attribute DONT_TOUCH : string;
+
 signal fft_feed_counter : natural := 0;
 signal fft_unload_counter: natural;
-signal fft_max_index : integer;
+signal fft_max_index : integer range 0 to FFT_MAX_SAMPLES;
 signal fft_max_value : Magnitude;
+signal fft_spectrum : FFTMagnitudes := (others => (others=>'0'));
+type SampleBuffer is array (0 to FFT_MAX_SAMPLES - 1) of std_ulogic_vector(17 downto 0);
+signal fft_debug_samples : SampleBuffer := (others => (others=>'0'));
+signal fft_debug_sending : std_ulogic := '0';
+signal fft_debug_send : std_ulogic := '0';
+
 -- Config slave channel alias signals
 signal s_axis_config_tdata_fwd_inv      : std_logic                    := '0';              -- forward or inverse
 
@@ -158,7 +166,14 @@ signal s_axis_data_tdata_im             : std_logic_vector(17 downto 0) := (othe
 signal m_axis_data_tdata_re             : std_logic_vector(28 downto 0) := (others => '0');  -- real data
 signal m_axis_data_tdata_im             : std_logic_vector(28 downto 0) := (others => '0');  -- imaginary data
 
-
+type DebugStep is (WaitingSampling, Sampling, WaitingSendingSamples, SendingSamples, WaitingFFTFeeding, FFTFeeding, WaitingFFTUnloading, FFTUnloading, WaitingSendingSpectrum, SendingSpectrum, Resetting);
+signal debug_state : DebugStep := WaitingSampling;
+signal debug_sampling : std_ulogic := '0';
+signal debug_sending_samples : std_ulogic := '0';
+signal debug_fft_feeding : std_ulogic := '0';
+signal debug_fft_unloading : std_ulogic := '0';
+signal debug_sending_spectrum : std_ulogic := '0';
+signal debug_sending_max : std_ulogic := '0';
 
 -----------------------------------------------------------
 -----------------------------------------------------------
@@ -245,15 +260,15 @@ end process;
 ------               FFT Processes                 -------
 ----------------------------------------------------------
 
+/*
 fft_feed: process(clk)
 variable counter : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
 variable sample : std_logic_vector(17 downto 0) := (others=>'1');
 variable rec : std_logic_vector(fft_s_axis_data_tdata'range);
-
 begin
     if rising_edge(clk) then
-        if fft_s_axis_data_tready = '1' then
-            sample := std_logic_vector(i2s_sample_out(17 downto 0));
+        if fft_s_axis_data_tready = '1' and i2s_data_ready = '1' and i2s_data_channel = '0' then
+            sample := std_logic_vector(i2s_sample_out(31 downto 14));
             --sample := "000000000111110100" when sample /= "000000000111110100" else "111111111000001100";
             rec(FFT_WIDTH-1 downto 0) := sample;
             rec(23 downto FFT_WIDTH) := (others => sample(17));
@@ -269,42 +284,289 @@ begin
                 counter := counter + 1;
                 fft_s_axis_data_tlast <= '0';
             end if;
+        else
+            fft_s_axis_data_tvalid <= '0';
         end if;
     end if;
     fft_feed_counter <= counter;
-end process;                                                                                            
+end process;
+*/
+
+
+debug_state_control : process(clk)
+begin
+    if rising_edge(clk) then
+        case debug_state is
+            when WaitingSampling =>
+                if debug_sampling = '1' then
+                    debug_state <= Sampling;
+                end if;
+            when Sampling =>
+                if debug_sampling = '0' then
+                    debug_state <= WaitingFFTFeeding;
+                end if;
+                
+            when WaitingSendingSamples =>
+                if debug_sending_samples = '1' then
+                    debug_state <= SendingSamples;
+                end if;
+            when SendingSamples =>
+                if debug_sending_samples = '0' then
+                    debug_state <= WaitingFFTFeeding;
+                end if;
+                    
+            when WaitingFFTFeeding =>
+                if debug_fft_feeding = '1' then
+                    debug_state <= FFTFeeding;
+                end if;
+            when FFTFeeding =>
+                if debug_fft_feeding = '0' then
+                    debug_state <= WaitingFFTUnloading;
+                end if;
+                
+            when WaitingFFTUnloading =>
+                if debug_fft_unloading = '1' then
+                    debug_state <= FFTUnloading;
+                end if;
+            when FFTUnloading =>
+                if debug_fft_unloading = '0' then
+                    debug_state <= Resetting;
+                end if;
+                
+            when WaitingSendingSpectrum =>
+                if debug_sending_spectrum = '1' then
+                    debug_state <= SendingSpectrum;
+                end if;
+            when SendingSpectrum =>
+                if debug_sending_spectrum = '0' then
+                    debug_state <= Resetting;
+                end if;
+                
+            when Resetting =>
+                debug_state <= WaitingSampling;
+                
+                
+         end case;
+     end if;
+end process;
+
+i2s_debug_inspect : process(clk)
+    variable index : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
+    variable busy : std_ulogic := '0';
+begin
+    if rising_edge(clk) then       
+        if (debug_state = WaitingSampling or debug_state = Sampling) and i2s_data_ready = '1' and i2s_data_channel = '0' then
+            fft_debug_samples(index) <= std_ulogic_vector(i2s_sample_out(31 downto 14));
+            if index = FFT_MAX_SAMPLES-1 then
+                index := 0;
+                
+                busy := '0';
+            else
+                index := index + 1;
+                busy := '1';
+            end if;
+            
+        end if;
+    end if;
+    debug_sampling <= busy;
+end process;
+
+fft_debug_feed: process(clk)
+variable counter : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
+variable sample : std_logic_vector(17 downto 0) := (others=>'1');
+variable rec : std_logic_vector(fft_s_axis_data_tdata'range);
+variable busy : std_ulogic := '0';
+
+begin
+    if rising_edge(clk) then
+        if fft_s_axis_data_tready = '1' and (debug_state = FFTFeeding or debug_state = WaitingFFTFeeding) then
+            sample := fft_debug_samples(counter);
+            --sample := "000000000111110100" when sample /= "000000000111110100" else "111111111000001100";
+            rec(FFT_WIDTH-1 downto 0) := sample;
+            rec(23 downto FFT_WIDTH) := (others => sample(17));
+            rec(rec'high downto (rec'high+1)/2) := (others => '0');
+            
+            fft_s_axis_data_tdata <= rec;
+            fft_s_axis_data_tvalid <= '1';
+            
+            if counter = FFT_MAX_SAMPLES-1 then
+                fft_s_axis_data_tlast <= '1';
+                counter := 0;
+                busy := '0';
+            else
+                counter := counter + 1;
+                fft_s_axis_data_tlast <= '0';
+                busy := '1';
+            end if;
+        else
+            fft_s_axis_data_tvalid <= '0';
+        end if;
+    end if;
+    fft_feed_counter <= counter;
+    debug_fft_feeding <= busy;
+end process;   
+
+                                                                                 
 
 fft_unload: process (clk)
     variable index : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
     variable sample_re : signed(FFT_WIDTH-1 downto 0);
     variable sample_im : signed(FFT_WIDTH-1 downto 0);
+    variable mag : Magnitude;
+    variable prev_mag : Magnitude;
+    variable busy : std_ulogic := '0';
+    variable max_index : integer range 0 to FFT_MAX_SAMPLES;
 begin
     if rising_edge(clk) then
-        if fft_m_axis_data_tvalid = '1' then
+        if debug_state = WaitingFFTFeeding then
+            max_index := 0;
+            fft_max_value <= (others=>'0');
+        end if;
+        
+        if fft_m_axis_data_tvalid = '1' and (debug_state = WaitingFFTFeeding or debug_state = FFTFeeding or debug_state = WaitingFFTUnloading or debug_state = FFTUnloading) then
             sample_re(17 downto 0) := signed(fft_m_axis_data_tdata(28 downto 11));
             sample_re(sample_re'high downto 18) := (others => sample_re(17));
             sample_im(17 downto 0) := signed(fft_m_axis_data_tdata(60 downto 43));
             sample_im(sample_im'high downto 18) := (others => sample_im(17));
             
-
-            fft_mag_output <= resize(sample_re*sample_re, Magnitude'high + 1) + resize(sample_im*sample_im,  Magnitude'high + 1);
+            mag := resize(sample_re*sample_re, Magnitude'high + 1) + resize(sample_im*sample_im,  Magnitude'high + 1);
+            fft_mag_output <= mag;
             fft_mag_outputted <= '1';
-
+            
+            fft_spectrum(index) <= mag;
+            
+            if index > 5 and prev_mag > fft_max_value and index < FFT_MAX_SAMPLES / 2 then
+                max_index := index - 1;
+                fft_max_value <= prev_mag;
+            end if;
+            
+            prev_mag := mag;
 
             if index = FFT_MAX_SAMPLES-1 then
                 index := 0;
+                fft_max_index <= max_index;
+                busy := '0';
             else
                 index := index + 1;
-            end if;            
+                busy := '1';
+            end if;
         else
             fft_mag_outputted <= '0';
         end if;
         fft_unload_counter <= index;
     end if;
+    debug_fft_unloading <= busy;
 end process;
 
+/*
+fft_debug_log_spectrum : process(clk)
+variable index : natural range 0 to FFT_MAX_SAMPLES := 0;
+type LogState is (Waiting, Retrieval, WaitingSend, WaitingStop);
+variable state : LogState := Waiting;
+variable mag : std_ulogic_vector(36 downto 0);
 
-freq_max: process(clk)
+    variable busy : std_ulogic := '0';
+    variable busy_max : std_ulogic := '0';
+    variable max_index : std_ulogic_vector(10 downto 0);
+begin
+    if rising_edge(clk) then
+        case state is
+            when Waiting =>
+                if debug_state = SendingSamples or debug_state = WaitingSendingSamples or debug_state = SendingSpectrum or debug_state = WaitingSendingSpectrum then
+                    state := Retrieval;
+                    index := 0;
+                    busy := '1';
+                end if;
+            when Retrieval =>                   
+                if debug_state = SendingSamples or debug_state = WaitingSendingSamples then
+                    mag := (23 downto 6 => std_ulogic_vector(fft_debug_samples(index)), others => fft_debug_samples(index)(17));
+                elsif debug_state = SendingSpectrum or debug_state = WaitingSendingSpectrum then
+                    mag := std_ulogic_vector(fft_spectrum(index));
+                    mag(5) := '0';
+                else
+                    mag := (16 downto 6 => std_ulogic_vector(to_unsigned(fft_max_index, 11)), others=>'0');  
+                    index := FFT_MAX_SAMPLES - 1 when index /= FFT_MAX_SAMPLES - 1;
+                    busy_max := '1';
+                end if; 
+                state := WaitingSend;
+                index := index + 1;
+                
+            when WaitingSend =>
+                if uart_state = WAIT_SEND then
+
+                    if index = FFT_MAX_SAMPLES then
+                        uart_str(0) <= (7 => '1', others => '0');
+                        uart_str(1) <= (others => '0');
+                        uart_str(2) <= (others => '0');
+                        uart_str(3) <= (others => '0');
+                        
+                        
+                    
+                        if debug_state = SendingSamples then
+                            strEnd <= 4;
+                        else
+                            max_index := std_ulogic_vector(to_unsigned(fft_max_index, 11));
+                            uart_str(4) <= (others=>'0');
+                            uart_str(5) <= (others=>'0');
+                            uart_str(6) <= (2 downto 0 => max_index(10 downto 8), others=>'0');
+                            uart_str(7) <= max_index(7 downto 0);
+                            
+                            uart_str(8) <= (7 => '1', others => '0');
+                            uart_str(9) <= (others=>'0');
+                            uart_str(10) <= (others=>'0');
+                            uart_str(11) <= (others=>'0');
+                            
+                            strEnd <= 12;
+                        end if;
+                        
+                        index := 0;
+                        state := WaitingStop;
+                        
+                        busy := '0';
+                        busy_max := '0';
+                    else
+                        uart_str(0) <= (7 => mag(5), 6 downto 0 => mag(36 downto 30));
+                        uart_str(1) <= mag(29 downto 22);
+                        uart_str(2) <= mag(21 downto 14);
+                        uart_str(3) <= mag(13 downto 6);
+                        strEnd <= 4;
+                        uart_str_send <= '1';
+                    
+                        state := Retrieval;
+                        busy := '1';
+                    end if;
+                end if;
+            when WaitingStop =>
+                uart_str_send <= '0';
+                state := Waiting;
+        end case;
+    end if;
+    debug_sending_samples <= busy;
+    debug_sending_spectrum <= busy;
+    debug_sending_max <= busy_max;
+end process;
+*/
+
+send_index : process
+variable max_index : std_ulogic_vector(10 downto 0);
+begin
+    if rising_edge(clk) then
+        if uart_state = WAIT_SEND then
+            max_index := std_ulogic_vector(to_unsigned(fft_max_index, 11));
+            uart_str(0) <= (others=>'0');
+            uart_str(1) <= (others=>'0');
+            uart_str(2) <= (2 downto 0 => max_index(10 downto 8), others=>'0');
+            uart_str(3) <= max_index(7 downto 0);
+            
+            strEnd <= 4;
+            uart_str_send <= '1';
+        else
+            uart_str_send <= '0';
+        end if;      
+    end if;
+end process;
+
+/*freq_max: process(clk)
 
 variable max_freq_index : natural range 0 to FFT_MAX_SAMPLES-1 := 0;
 variable max_freq_magnitude : Magnitude := (others=>'0');
@@ -345,7 +607,9 @@ begin
         fft_max_index <= max_freq_index;
         fft_max_value <= max_freq_magnitude;
     end if;
-end process;
+end process;*/
+
+
 
 
 
@@ -457,6 +721,11 @@ end process;
 
 
 RsTx <= uart_tx;
-led(0 to 15) <= audio_sample(17 downto 2);
+led(5 to 15) <= audio_sample(17 downto 7);
+led(4) <= '1' when debug_state = Sampling else '0';
+led(3) <= '1' when debug_state = SendingSamples else '0';
+led(2) <= '1' when debug_state = FFTFeeding else '0';
+led(1) <= '1' when debug_state = FFTUnloading else '0';
+led(0) <= '1' when debug_state = SendingSpectrum else '0';
 
 end Behavioral;
