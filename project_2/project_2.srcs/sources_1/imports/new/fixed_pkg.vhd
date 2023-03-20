@@ -50,3 +50,4 @@ package fixed_pkg is new fixed.fixed_generic_pkg
     fixed_guard_bits     => 3,
     no_warning           => false
     );
+    

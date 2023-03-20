@@ -28,6 +28,9 @@ use IEEE.NUMERIC_STD.ALL;
 use work.Ascii.all;
 use work.LED.all;
 
+library fixed;
+use fixed.fixed_pkg.all;
+
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx leaf cells in this code.
 --library UNISIM;
@@ -141,6 +144,22 @@ signal led_ready : std_logic;
 signal led_send : std_logic;
 
 
+-- Goertzels
+constant GOERTZEL_B : positive := 7;
+constant GOERTZEL_F : positive := 11;
+signal goertzel_in_ready : std_ulogic;
+signal goertzel_out_data : sfixed((GOERTZEL_B-1)*2 + 1 downto -2*GOERTZEL_F);
+signal goertzel_out_valid : std_ulogic;
+
+-- fmaa
+signal fma_in_A : sfixed(GOERTZEL_B-1 downto -GOERTZEL_F);
+signal fma_in_B : sfixed(GOERTZEL_B-1 downto -GOERTZEL_F);
+signal fma_in_C : sfixed(GOERTZEL_B-1 downto -GOERTZEL_F);
+signal fma_in_valid : std_ulogic := '1';
+signal fma_in_ready : std_ulogic;
+
+signal fma_out_data : sfixed(GOERTZEL_B-1 downto -GOERTZEL_F);
+signal fma_out_valid : std_ulogic;
 
 -- DEBUG
 attribute DONT_TOUCH : string;
@@ -219,6 +238,42 @@ fft : entity work.fft port map (
     event_tlast_unexpected => fft_event_tlast_unexpected,
     event_tlast_missing => fft_event_tlast_missing,
     event_data_in_channel_halt => fft_event_data_in_channel_halt
+);
+
+/*
+goertzel0 : entity work.goertzel
+generic map(
+    B => 11,
+    F => 24,
+    Nb => 10,
+    k => 0
+)
+port map(
+	clk => clk,
+	in_data => (others => '0'),
+	in_ready => goertzel_in_ready,
+	in_valid => '1',
+	
+	out_data => goertzel_out_data,
+	out_valid => goertzel_out_valid
+);
+*/
+
+fma: entity work.sfixed_multiplier
+generic map (
+    B => GOERTZEL_B,
+    F => GOERTZEL_F
+)
+port map (
+     clk => clk,
+    in_A => fma_in_A,
+    in_B => fma_in_B,
+    in_C => fma_in_C,
+    in_valid => fma_in_valid,
+    in_ready => fma_in_ready,
+    
+    out_data => fma_out_data,
+    out_valid => fma_out_valid
 );
 
 led_strip : entity work.sk6812
@@ -726,6 +781,15 @@ led(4) <= '1' when debug_state = Sampling else '0';
 led(3) <= '1' when debug_state = SendingSamples else '0';
 led(2) <= '1' when debug_state = FFTFeeding else '0';
 led(1) <= '1' when debug_state = FFTUnloading else '0';
-led(0) <= '1' when debug_state = SendingSpectrum else '0';
+--led(0) <= '1' when debug_state = SendingSpectrum else '0';
+
+dontremove : process(clk)
+begin
+    if rising_edge(clk) then
+        if goertzel_out_valid = '1' then
+            led(0) <= '1' when goertzel_out_data > to_sfixed(1.0, GOERTZEL_B, -GOERTZEL_F) else '0';
+        end if;
+    end if;
+end process;
 
 end Behavioral;
