@@ -89,7 +89,45 @@ architecture Behavioral of goertzel is
     signal power_s2 : PFP;
     signal power_s1 : PFP;
 
+
+
+
+    -- Multiply Add
+    signal ma_in_A : sfixed(B-1 downto -F);
+    signal ma_in_B : sfixed(B-1 downto -F);
+    signal ma_in_C : sfixed(B-1 downto -F);
+    signal ma_in_valid : std_ulogic := '1';
+    signal ma_in_ready : std_ulogic;
+    
+    signal ma_out_data : sfixed(B-1 downto -F);
+    signal ma_out_valid : std_ulogic;
 begin
+
+
+
+sma: entity work.sfixed_multiplier
+generic map (
+    B => pleft,
+    F => -pright
+)
+port map (
+     clk => clk,
+     in_a => (others => '0'),
+     in_b => (others => '0'),
+     in_c => (others => '0'),
+     in_valid => '0'/*,
+     
+    in_A => ma_in_A,
+    in_B => ma_in_B,
+    in_C => ma_in_C,
+    in_valid => ma_in_valid,
+    in_ready => ma_in_ready,
+    
+    out_data => ma_out_data,
+    out_valid => ma_out_valid
+    */
+);
+
 
 iterations: process(clk)
     variable i : natural range 0 to N := 0;
@@ -108,59 +146,83 @@ iterations: process(clk)
     
     variable x : FP;
 
-    type IterationStage is (Waiting, Coeff, Addition, EndIter, Subtraction, PS1, PS2, PCS1, PCS2, PAddition);
-    variable state : IterationStage := Waiting;
+    type StageProgress is (Present, Calculating, Control);
+    type PipelineStage is (Waiting, Coeff, Addition, EndIter, Subtraction, PS1, PS2, PCS1, PCS2, PAddition);
+    variable state : PipelineStage := Waiting;
+    variable progress : StageProgress := Control;
+    
+    --variable acc : FP := to_sfixed(0, pleft, pright);
 begin
 
     if rising_edge(clk) then
-        case state is
-            when Waiting =>
-                out_valid <= '0';
-                if in_valid = '1' then
-                    state := Coeff;
-                    x := in_data sra Nb;
-                    in_ready <= '0';
-                end if;
-            when Coeff =>
-                sn0 := resize(double_cos_omega_fp*s1, pleft, pright, fixed_saturate, fixed_truncate);
-                state := Addition;
-            when Addition =>
-                sn1 := resize(sn0 + x, pleft, pright, fixed_saturate, fixed_truncate);
-                state := Subtraction;
-            when Subtraction =>
-                sn2 := resize(sn1 - s2, pleft, pright, fixed_saturate, fixed_truncate);
-                state := EndIter;
-            when EndIter =>
-                i := i + 1;
-                if i = N-1 then
-                    i := 0;
-                    state := PS1;
-                else
-                    s2 := s1;
-                    s1 := sn2;
-                    state := Waiting;
+    
+        
+        if progress = Control then
+            case state is
+                when Waiting =>
+                    out_valid <= '0';
+                    if in_valid = '1' then
+                        state := Coeff;
+                        x := in_data sra Nb;
+                        in_ready <= '0';
+                    end if;
+                when Coeff =>
+                    sn0 := resize(double_cos_omega_fp*s1, pleft, pright, fixed_saturate, fixed_truncate);
+                    state := Addition;
+                when Addition =>
+                    sn1 := resize(sn0 + x, pleft, pright, fixed_saturate, fixed_truncate);
+                    state := Subtraction;
+                when Subtraction =>
+                    sn2 := resize(sn1 - s2, pleft, pright, fixed_saturate, fixed_truncate);
+                    state := EndIter;
+                when EndIter =>
+                    i := i + 1;
+                    if i = N-1 then
+                        i := 0;
+                        state := PS1;
+                    else
+                        s2 := s1;
+                        s1 := sn2;
+                        state := Waiting;
+                        in_ready <= '1';
+                    end if;
+                when PS1 =>
+                    s1_2 := resize(s1 * s1, pleft, pright, fixed_saturate, fixed_truncate);
+                    state := PS2;
+                when PS2 =>
+                    s2_2 := resize(s2 * s2, pleft, pright, fixed_saturate, fixed_truncate);
+                    state := PCS1;
+                when PCS1 =>
+                    cs1s2 := resize(double_cos_omega_fp * s1, pleft, pright, fixed_saturate, fixed_truncate);
+                    state := PCS2;
+                when PCS2 =>
+                    cs1s2 := resize(cs1s2 * s2, pleft, pright, fixed_saturate, fixed_truncate);
+                    state := PAddition;
+                when PAddition =>
+                    power := resize(s1_2 + s2_2 - cs1s2, pleft, pright, fixed_saturate, fixed_truncate);
+                    out_data <= power;
+                    out_valid <= '1';
                     in_ready <= '1';
-                end if;
-            when PS1 =>
-                s1_2 := resize(s1 * s1, pleft, pright, fixed_saturate, fixed_truncate);
-                state := PS2;
-            when PS2 =>
-                s2_2 := resize(s2 * s2, pleft, pright, fixed_saturate, fixed_truncate);
-                state := PCS1;
-            when PCS1 =>
-                cs1s2 := resize(double_cos_omega_fp * s1, pleft, pright, fixed_saturate, fixed_truncate);
-                state := PCS2;
-            when PCS2 =>
-                cs1s2 := resize(cs1s2 * s2, pleft, pright, fixed_saturate, fixed_truncate);
-                state := PAddition;
-            when PAddition =>
-                power := resize(s1_2 + s2_2 - cs1s2, pleft, pright, fixed_saturate, fixed_truncate);
-                out_data <= power;
-                out_valid <= '1';
-                in_ready <= '1';
-                s2 := (others => '0');
-                s1 := (others => '0');
-                state := Waiting;
+                    s2 := (others => '0');
+                    s1 := (others => '0');
+                    state := Waiting;
+                end case;
+            end if;
+            
+            
+            case progress is
+                when Present =>
+                    ma_in_valid <= '1';
+                    if ma_in_ready = '1' then
+                        progress := Calculating;
+                    end if;
+                
+                when Calculating =>
+                    if out_valid = '1' then
+                        --acc := ma_out_data;
+                        progress := Control;
+                    end if;
+                when others =>
             end case;
     end if;
 end process;

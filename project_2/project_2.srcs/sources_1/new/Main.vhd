@@ -151,15 +151,6 @@ signal goertzel_in_ready : std_ulogic;
 signal goertzel_out_data : sfixed((GOERTZEL_B-1)*2 + 1 downto -2*GOERTZEL_F);
 signal goertzel_out_valid : std_ulogic;
 
--- fmaa
-signal fma_in_A : sfixed(GOERTZEL_B-1 downto -GOERTZEL_F);
-signal fma_in_B : sfixed(GOERTZEL_B-1 downto -GOERTZEL_F);
-signal fma_in_C : sfixed(GOERTZEL_B-1 downto -GOERTZEL_F);
-signal fma_in_valid : std_ulogic := '1';
-signal fma_in_ready : std_ulogic;
-
-signal fma_out_data : sfixed(GOERTZEL_B-1 downto -GOERTZEL_F);
-signal fma_out_valid : std_ulogic;
 
 -- DEBUG
 attribute DONT_TOUCH : string;
@@ -240,11 +231,20 @@ fft : entity work.fft port map (
     event_data_in_channel_halt => fft_event_data_in_channel_halt
 );
 
-/*
+multiply_scheduler : entity work.RoundRobinScheduler
+generic map ( N => 5)
+port map (
+    clk => clk,
+    start => clk,
+    readies => audio_sample(4 downto 0),
+    outs(4 downto 0) => led(0 to 4)
+    );
+
+
 goertzel0 : entity work.goertzel
 generic map(
-    B => 11,
-    F => 24,
+    F => GOERTZEL_F,
+    B => GOERTZEL_B,
     Nb => 10,
     k => 0
 )
@@ -257,24 +257,7 @@ port map(
 	out_data => goertzel_out_data,
 	out_valid => goertzel_out_valid
 );
-*/
 
-fma: entity work.sfixed_multiplier
-generic map (
-    B => GOERTZEL_B,
-    F => GOERTZEL_F
-)
-port map (
-     clk => clk,
-    in_A => fma_in_A,
-    in_B => fma_in_B,
-    in_C => fma_in_C,
-    in_valid => fma_in_valid,
-    in_ready => fma_in_ready,
-    
-    out_data => fma_out_data,
-    out_valid => fma_out_valid
-);
 
 led_strip : entity work.sk6812
 generic map (
@@ -777,19 +760,19 @@ end process;
 
 RsTx <= uart_tx;
 led(5 to 15) <= audio_sample(17 downto 7);
-led(4) <= '1' when debug_state = Sampling else '0';
-led(3) <= '1' when debug_state = SendingSamples else '0';
-led(2) <= '1' when debug_state = FFTFeeding else '0';
-led(1) <= '1' when debug_state = FFTUnloading else '0';
+--led(4) <= '1' when debug_state = Sampling else '0';
+--led(3) <= '1' when debug_state = SendingSamples else '0';
+--led(2) <= '1' when debug_state = FFTFeeding else '0';
+--led(1) <= '1' when debug_state = FFTUnloading else '0';
 --led(0) <= '1' when debug_state = SendingSpectrum else '0';
 
-dontremove : process(clk)
-begin
-    if rising_edge(clk) then
-        if goertzel_out_valid = '1' then
-            led(0) <= '1' when goertzel_out_data > to_sfixed(1.0, GOERTZEL_B, -GOERTZEL_F) else '0';
-        end if;
-    end if;
-end process;
+--dontremove : process(clk)
+--begin
+--    if rising_edge(clk) then
+--        if goertzel_out_valid = '1' then
+--            led(0) <= '1' when goertzel_out_data > to_sfixed(1.0, GOERTZEL_B, -GOERTZEL_F) else '0';
+--        end if;
+--    end if;
+--end process;
 
 end Behavioral;

@@ -63,7 +63,7 @@ constant AHIGH : positive := in_A'high - in_A'low;
 constant BHIGH : positive := in_B'high - in_B'low;
 constant CHIGH : positive := in_C'high - in_C'low;
 
-constant WIDTH : positive := 18;
+constant WIDTH : positive := 36;
 constant HIGH : positive := WIDTH - 1;
 constant RHIGH : positive := 2*WIDTH + 1 - 1;
 signal eA : std_ulogic_vector(HIGH downto 0);
@@ -113,7 +113,7 @@ multiplier : entity work.multadd
 );
 
 controller : process(clk)
-constant LATENCY : positive := 4;
+constant LATENCY : positive := 12;
 variable counter : natural range 0 to LATENCY := 0;
 
 begin

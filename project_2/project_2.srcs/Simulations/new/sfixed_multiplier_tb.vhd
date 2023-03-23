@@ -41,8 +41,8 @@ ARCHITECTURE behavior OF sfixed_multiplier_tb IS
     
     signal clk : std_ulogic := '0';
     
-    constant B : integer := 6;
-    constant F : integer := 12;
+    constant B : integer := 12;
+    constant F : integer := 24;
     
     signal in_A : sfixed(B-1 downto -F) := to_sfixed(-0.5, B-1, -F);
     signal in_B : sfixed(B-1 downto -F) := to_sfixed(3.0, B-1, -F);
