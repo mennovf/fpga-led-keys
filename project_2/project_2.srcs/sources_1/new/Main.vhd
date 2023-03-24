@@ -243,8 +243,6 @@ port map (
 
 goertzel0 : entity work.goertzel
 generic map(
-    F => GOERTZEL_F,
-    B => GOERTZEL_B,
     Nb => 10,
     k => 0
 )

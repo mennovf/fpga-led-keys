@@ -37,45 +37,32 @@ use fixed.fixed_float_types.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
+use work.SFixedMultiplierInterface.all;
+
 entity goertzel is
 generic (
-    constant B : positive;
-    constant F : positive;
     constant Nb : positive;
     constant k : natural
 );
 
 Port (
     signal clk : in std_ulogic;
-    signal in_data : in sfixed(B-1 downto -F);
+    signal in_data : in FP;
     signal in_valid : in std_ulogic;
     signal in_ready : out std_ulogic := '1';
     
-    signal out_data : out sfixed((B-1)*2+1 downto -2*F);
-    signal out_valid : out std_ulogic := '0'/*;
-    
-    
-    signal debug_s1_2 : out sfixed((B-1)*2 + 1 downto -F*2);
-    signal debug_s2_2 : out sfixed((B-1)*2 + 1 downto -F*2);
-    signal debug_cs1s2 : out sfixed((B-1)*2 + 1 downto -F*2);
-    signal debug_power : out sfixed((B-1)*2 + 1 downto -F*2);
-    
-    
-    signal debug_s0 : out sfixed((B-1)*2 + 1 downto -F*2);
-    signal debug_s1 : out sfixed((B-1)*2 + 1 downto -F*2);
-    signal debug_s2 : out sfixed((B-1)*2 + 1 downto -F*2)
-    */
+    signal out_data : out FP;
+    signal out_valid : out std_ulogic := '0'
 );
 
 end goertzel;
 
 architecture Behavioral of goertzel is
-    constant left : integer := B-1;
-    constant right : integer := -F;
+    constant left : integer := MULTIPLIER_LEFT;
+    constant right : integer := MULTIPLIER_RIGHT;
     constant pleft : integer := left *2 + 1;
     constant pright : integer := right*2;
     
-    subtype FP is sfixed(left downto right);
     subtype PFP is sfixed(pleft downto pright);
     
     constant N : positive := 2 ** Nb;
@@ -93,39 +80,29 @@ architecture Behavioral of goertzel is
 
 
     -- Multiply Add
-    signal ma_in_A : sfixed(B-1 downto -F);
-    signal ma_in_B : sfixed(B-1 downto -F);
-    signal ma_in_C : sfixed(B-1 downto -F);
+    signal ma_in_A : FP;
+    signal ma_in_B : FP;
+    signal ma_in_C : FP;
     signal ma_in_valid : std_ulogic := '1';
     signal ma_in_ready : std_ulogic;
     
-    signal ma_out_data : sfixed(B-1 downto -F);
+    signal ma_out_data : FP;
     signal ma_out_valid : std_ulogic;
 begin
 
 
-
 sma: entity work.sfixed_multiplier
-generic map (
-    B => pleft,
-    F => -pright
-)
 port map (
      clk => clk,
-     in_a => (others => '0'),
-     in_b => (others => '0'),
-     in_c => (others => '0'),
-     in_valid => '0'/*,
      
-    in_A => ma_in_A,
-    in_B => ma_in_B,
-    in_C => ma_in_C,
-    in_valid => ma_in_valid,
-    in_ready => ma_in_ready,
+    ins.a => ma_in_A,
+    ins.b => ma_in_B,
+    ins.c => ma_in_C,
+    ins.valid => ma_in_valid,
+    outs.ready => ma_in_ready,
     
-    out_data => ma_out_data,
-    out_valid => ma_out_valid
-    */
+    outs.result => ma_out_data,
+    outs.valid => ma_out_valid
 );
 
 
@@ -151,12 +128,12 @@ iterations: process(clk)
     variable state : PipelineStage := Waiting;
     variable progress : StageProgress := Control;
     
-    --variable acc : FP := to_sfixed(0, pleft, pright);
+    variable acc : FP := to_sfixed(0, left, right);
 begin
 
     if rising_edge(clk) then
     
-        
+
         if progress = Control then
             case state is
                 when Waiting =>
@@ -200,7 +177,7 @@ begin
                     state := PAddition;
                 when PAddition =>
                     power := resize(s1_2 + s2_2 - cs1s2, pleft, pright, fixed_saturate, fixed_truncate);
-                    out_data <= power;
+                    out_data <= resize(power, left, right, fixed_saturate, fixed_truncate);
                     out_valid <= '1';
                     in_ready <= '1';
                     s2 := (others => '0');

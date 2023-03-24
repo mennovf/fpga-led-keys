@@ -100,7 +100,6 @@
       </File>
       <File Path="$PSRCDIR/sources_1/ip/fft/fft.xci">
         <FileInfo>
-          <Attr Name="UserDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PSRCDIR/sources_1/ip/fft/fft.xci"/>
           <Attr Name="ImportTime" Val="1678045886"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -180,7 +179,6 @@
       </File>
       <File Path="$PSRCDIR/sources_1/new/Main.vhd">
         <FileInfo SFType="VHDL2008">
-          <Attr Name="UserDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
