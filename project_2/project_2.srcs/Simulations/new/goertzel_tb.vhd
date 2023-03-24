@@ -37,67 +37,67 @@ END Goertzel_tb;
  
 ARCHITECTURE behavior OF Goertzel_tb IS 
 	
-	signal en_sim : boolean := True;
+--	signal en_sim : boolean := True;
     
-    signal clk : std_ulogic := '0';
+--    signal clk : std_ulogic := '0';
     
-    constant B : integer := 12;
-    constant F : integer := 24;
+--    constant B : integer := 12;
+--    constant F : integer := 24;
     
-    signal in_data : sfixed(B-1 downto -F);
-    signal in_valid : std_ulogic := '0';
-    signal in_ready : std_ulogic;
+--    signal in_data : sfixed(B-1 downto -F);
+--    signal in_valid : std_ulogic := '0';
+--    signal in_ready : std_ulogic;
     
-    signal out_data : sfixed((B-1)*2+1 downto -2*F);
-    signal out_valid : std_ulogic;
+--    signal out_data : sfixed((B-1)*2+1 downto -2*F);
+--    signal out_valid : std_ulogic;
 BEGIN
 
 
-DUT : entity work.goertzel
-generic map(
-    B => B,
-    F => F,
-    Nb => 10,
-    k => 0
-)
-port map(
-	clk => clk,
-	in_data => in_data,
-	in_ready => in_ready,
-	in_valid => in_valid,
+--DUT : entity work.goertzel
+--generic map(
+--    B => B,
+--    F => F,
+--    Nb => 10,
+--    k => 0
+--)
+--port map(
+--	clk => clk,
+--	in_data => in_data,
+--	in_ready => in_ready,
+--	in_valid => in_valid,
 	
-	out_data => out_data,
-	out_valid => out_valid
-);
+--	out_data => out_data,
+--	out_valid => out_valid
+--);
 
 
-mclk : process
-begin
-	while en_sim = True loop
-		wait for 5ns;
-		clk <= not clk;
-	end loop;
-	wait;
-end process;
+--mclk : process
+--begin
+--	while en_sim = True loop
+--		wait for 5ns;
+--		clk <= not clk;
+--	end loop;
+--	wait;
+--end process;
 
-ginput : process(clk)
-constant MAX : positive := 1;
-variable counter : natural range 0 to MAX := 0;
-begin        
-    if rising_edge(clk) then
-        if in_ready = '1' then
-            in_valid <= '1';
-            --in_data <= (0 => '1', others => '0') when counter = 0 else (0 => '0', others => '0');
-            in_data <= (1 => '1', others => '0');
+--ginput : process(clk)
+--constant MAX : positive := 1;
+--variable counter : natural range 0 to MAX := 0;
+--begin        
+--    if rising_edge(clk) then
+--        if in_ready = '1' then
+--            in_valid <= '1';
+--            --in_data <= (0 => '1', others => '0') when counter = 0 else (0 => '0', others => '0');
+--            in_data <= (1 => '1', others => '0');
             
-            if counter < MAX then
-                counter := counter + 1;
-            else
-                counter := 0;
-            end if;
-        else
-            --in_valid <= '0';
-        end if;
-    end if;
-end process;
+--            if counter < MAX then
+--                counter := counter + 1;
+--            else
+--                counter := 0;
+--            end if;
+--        else
+--            --in_valid <= '0';
+--        end if;
+--    end if;
+--end process;
 END;

@@ -63,8 +63,7 @@ begin
 
 scheduler : process(clk)
 
-variable counter : natural range 0 to N-1 := 0;
-
+variable active : std_ulogic_vector(N-1 downto 0) := (others => '0');
 type StateType is (Idle, WaitingStart, WaitingEnd);
 
 variable state : StateType := Idle;
@@ -77,22 +76,23 @@ if rising_edge(clk) then
         when Idle =>
             if start = '1' then
                 state := WaitingStart;
-                outs(0) <= '1';
+                active := active(N-2 downto 0) & '1';
+                outs <= active;
             end if;
         when WaitingStart =>
-            if readies(counter) = '0' then
+            if (active and readies) /= active then
                 state := WaitingEnd;
-                outs(counter) <= '0';
+                outs <= (others => '0');
             end if;
         when WaitingEnd =>
-            if readies(counter) = '1' then
-                if counter = N-1 then
+            if (readies and active) = active then
+                if active(N-1) = '1' then
                     state := Idle;
-                    counter := 0;
+                    active := (others => '0');
                     outs <= (others => '0');
                 else
-                    counter := counter + 1;
-                    outs(counter) <= '1';
+                    active := active(N-2 downto 0) & '0';
+                    outs <= active;
                     state := WaitingStart;
                 end if;
             end if;
