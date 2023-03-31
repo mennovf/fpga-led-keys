@@ -14,7 +14,7 @@
 -- 
 -- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments:
+-- IIRAdd1al Comments:
 -- 
 ----------------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ use work.SFixedMultiplierInterface.all;
 
 entity goertzel is
 generic (
-    constant Nb : positive;
+    constant N : positive;
     constant k : natural
 );
 
@@ -52,7 +52,11 @@ Port (
     signal in_ready : out std_ulogic := '1';
     
     signal out_data : out FP;
-    signal out_valid : out std_ulogic := '0'
+    signal out_valid : out std_ulogic := '0';
+    
+    signal multaddin  : out MultAddInput := (valid => '0', others => (others=>'0'));
+    signal multaddout : in MultAddOutput
+    
 );
 
 end goertzel;
@@ -60,23 +64,15 @@ end goertzel;
 architecture Behavioral of goertzel is
     constant left : integer := MULTIPLIER_LEFT;
     constant right : integer := MULTIPLIER_RIGHT;
-    constant pleft : integer := left *2 + 1;
-    constant pright : integer := right*2;
     
-    subtype PFP is sfixed(pleft downto pright);
-    
-    constant N : positive := 2 ** Nb;
+    constant Ninverse : FP := to_sfixed(1.0 / real(N), left, right);
     constant omega : real := 2 * MATH_PI * k / N;
     constant double_cos_omega : real := 2*cos(omega);
     constant double_cos_omega_fp : FP := to_sfixed(double_cos_omega, left, right);
-    
-        
-    
-    signal do_power : boolean := False;
-    signal power_s2 : PFP;
-    signal power_s1 : PFP;
-
-
+    constant neg_double_cos_omega_fp : FP := to_sfixed(-double_cos_omega, left, right);
+    constant ONE  : FP := to_sfixed(1.0,  left, right);
+    constant MONE : FP := to_sfixed(-1.0, left, right);
+    constant ZERO : FP := to_sfixed(0, left, right);
 
 
     -- Multiply Add
@@ -91,116 +87,128 @@ architecture Behavioral of goertzel is
 begin
 
 
-sma: entity work.sfixed_multiplier
-port map (
-     clk => clk,
-     
-    ins.a => ma_in_A,
-    ins.b => ma_in_B,
-    ins.c => ma_in_C,
-    ins.valid => ma_in_valid,
-    outs.ready => ma_in_ready,
-    
-    outs.result => ma_out_data,
-    outs.valid => ma_out_valid
-);
+multaddin.a <= ma_in_a;
+multaddin.b <= ma_in_b;
+multaddin.c <= ma_in_c;
+multaddin.valid <= ma_in_valid;
+ma_in_ready <= multaddout.ready;
 
+ma_out_data <= multaddout.result;
+ma_out_valid <= multaddout.valid;
 
 iterations: process(clk)
     variable i : natural range 0 to N := 0;
     
-    variable s2 : PFP := (others => '0');
-    variable s1 : PFP := (others => '0');
+    variable s2 : FP := (others => '0');
+    variable s1 : FP := (others => '0');
     
-    variable sn0 : PFP;
-    variable sn1 : PFP;
-    variable sn2 : PFP;
-    
-    variable s1_2 : PFP;
-    variable s2_2 : PFP;
-    variable cs1s2 : PFP;
-    variable power : PFP;
-    
-    variable x : FP;
+    variable acc : FP;
 
     type StageProgress is (Present, Calculating, Control);
-    type PipelineStage is (Waiting, Coeff, Addition, EndIter, Subtraction, PS1, PS2, PCS1, PCS2, PAddition);
+    type PipelineStage is (Waiting, IIRAdd1, IIRAdd2, EndIter, PCS1, PCS2, PS1, PS2, EndSample);
     variable state : PipelineStage := Waiting;
     variable progress : StageProgress := Control;
     
-    variable acc : FP := to_sfixed(0, left, right);
 begin
 
     if rising_edge(clk) then
-    
-
-        if progress = Control then
-            case state is
-                when Waiting =>
-                    out_valid <= '0';
-                    if in_valid = '1' then
-                        state := Coeff;
-                        x := in_data sra Nb;
-                        in_ready <= '0';
-                    end if;
-                when Coeff =>
-                    sn0 := resize(double_cos_omega_fp*s1, pleft, pright, fixed_saturate, fixed_truncate);
-                    state := Addition;
-                when Addition =>
-                    sn1 := resize(sn0 + x, pleft, pright, fixed_saturate, fixed_truncate);
-                    state := Subtraction;
-                when Subtraction =>
-                    sn2 := resize(sn1 - s2, pleft, pright, fixed_saturate, fixed_truncate);
-                    state := EndIter;
-                when EndIter =>
-                    i := i + 1;
-                    if i = N-1 then
-                        i := 0;
-                        state := PS1;
-                    else
-                        s2 := s1;
-                        s1 := sn2;
-                        state := Waiting;
-                        in_ready <= '1';
-                    end if;
-                when PS1 =>
-                    s1_2 := resize(s1 * s1, pleft, pright, fixed_saturate, fixed_truncate);
-                    state := PS2;
-                when PS2 =>
-                    s2_2 := resize(s2 * s2, pleft, pright, fixed_saturate, fixed_truncate);
-                    state := PCS1;
-                when PCS1 =>
-                    cs1s2 := resize(double_cos_omega_fp * s1, pleft, pright, fixed_saturate, fixed_truncate);
-                    state := PCS2;
-                when PCS2 =>
-                    cs1s2 := resize(cs1s2 * s2, pleft, pright, fixed_saturate, fixed_truncate);
-                    state := PAddition;
-                when PAddition =>
-                    power := resize(s1_2 + s2_2 - cs1s2, pleft, pright, fixed_saturate, fixed_truncate);
-                    out_data <= resize(power, left, right, fixed_saturate, fixed_truncate);
-                    out_valid <= '1';
-                    in_ready <= '1';
-                    s2 := (others => '0');
-                    s1 := (others => '0');
-                    state := Waiting;
-                end case;
-            end if;
+                         
+        case progress is
+            when Present =>
+                ma_in_valid <= '1';
+                if ma_in_ready = '1' then
+                    progress := Calculating;
+                end if;
             
-            
-            case progress is
-                when Present =>
-                    ma_in_valid <= '1';
-                    if ma_in_ready = '1' then
-                        progress := Calculating;
-                    end if;
+            when Calculating =>
+                ma_in_valid <= '0';
+                if ma_out_valid = '1' then
+                    acc := ma_out_data;
+                    progress := Control;
+                end if;
+            when Control  =>
+                case state is
                 
-                when Calculating =>
-                    if out_valid = '1' then
-                        --acc := ma_out_data;
-                        progress := Control;
-                    end if;
-                when others =>
-            end case;
+                    when Waiting =>
+                        out_valid <= '0';
+                        if in_valid = '1' then
+                            ma_in_a <= in_data;
+                            ma_in_b <= Ninverse;
+                            ma_in_c <= ZERO;
+                            in_ready <= '0';
+                            
+                            state := IIRAdd1;
+                            progress := Present;
+                        end if;
+                
+                    when IIRAdd1 =>
+                        ma_in_a <= double_cos_omega_fp;
+                        ma_in_b <= s1;
+                        ma_in_c <= acc;
+                        
+                        state := IIRAdd2;
+                        progress := Present;
+                        
+                    when IIRAdd2 =>
+                        ma_in_a <= MONE;
+                        ma_in_b <= s2;
+                        ma_in_c <= acc;
+                        
+                        state := EndIter;
+                        progress := Present;
+                        
+                    when EndIter =>
+                        i := i + 1;
+                        
+                        s2 := s1;
+                        s1 := acc;
+                        
+                        if i = N then
+                            i := 0;
+                            state := PCS1;
+                        else
+                            state := Waiting;
+                            in_ready <= '1';
+                        end if;
+                    
+                        
+                    when PCS1 =>
+                        ma_in_a <= neg_double_cos_omega_fp;
+                        ma_in_b <= s1;
+                        ma_in_c <= ZERO;
+                        state := PCS2;
+                        progress := Present;
+                        
+                    when PCS2 =>
+                        ma_in_a <= acc;
+                        ma_in_b <= s2;
+                        ma_in_c <= ZERO;
+                        state := PS1;
+                        progress := Present;
+                    
+                    when PS1 =>
+                        ma_in_a <= s1;
+                        ma_in_b <= s1;
+                        ma_in_c <= acc;
+                        state := PS2;
+                        progress := Present;
+                        
+                    when PS2 =>
+                        ma_in_a <= s2;
+                        ma_in_b <= s2;
+                        ma_in_c <= acc;
+                        state := EndSample;
+                        progress := Present;
+                        
+                    when EndSample =>
+                        out_data <= acc;
+                        out_valid <= '1';
+                        in_ready <= '1';
+                        s2 := (others => '0');
+                        s1 := (others => '0');
+                        state := Waiting;
+                end case;
+        end case;
     end if;
 end process;
 

@@ -25,20 +25,21 @@ use fixed.fixed_pkg.all;
 use fixed.fixed_float_types.all;
 
 package SFixedMultiplierInterface is 
-    constant MULTIPLIER_B : positive := 12;
-    constant MULTIPLIER_F : positive := 24;
+    constant MULTIPLIER_B : positive := 6;
+    constant MULTIPLIER_F : positive := 30;
     constant MULTIPLIER_LEFT : positive := MULTIPLIER_B - 1;
-    constant MULTIPLIER_RIGHT : integer := - MULTIPLIER_F;
+    constant MULTIPLIER_RIGHT : integer := -MULTIPLIER_F;
+    constant MULTIPLIER_WIDTH : positive := MULTIPLIER_B + MULTIPLIER_F;
     subtype FP is sfixed(MULTIPLIER_LEFT downto MULTIPLIER_RIGHT);
     
-    type Input is record
+    type MultAddInput is record
         a : FP;
         b : FP;
         c : FP;
         valid : std_ulogic;
     end record;
     
-    type Output is record
+    type MultAddOutput is record
         ready : std_ulogic;       
         result : FP;
         valid : std_ulogic;
@@ -67,8 +68,8 @@ use work.SFixedMultiplierInterface.all;
 entity sfixed_multiplier is
 port (
     signal clk : in std_ulogic;
-    signal ins : in Input;
-    signal outs: out Output := (ready => '0', result => (others => '0'), valid => '0')
+    signal ins : in MultAddInput;
+    signal outs: out MultAddOutput := (ready => '0', result => (others => '0'), valid => '0')
 );
 
 end sfixed_multiplier;
