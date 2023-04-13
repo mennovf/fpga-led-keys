@@ -68,9 +68,21 @@ subtype Printable is natural range 33 to 126;
 -- WAIT_SEND    -- Do nothing. Wait for the send to become asserted.
 type UART_STATE_TYPE is (SEND_CHAR, RDY_LOW, WAIT_RDY, WAIT_SEND);
 
+type NoteDetector is record
+    N : positive;
+    k : positive;
+    threshold : FP;
+    ledid : natural;
+end record;
 
+constant BIN_SIZE : positive := 11;
+constant N_BINS   : positive := 8;
+constant N_DETECTORS : positive := BIN_SIZE * N_BINS;
 
-
+type NoteDetectorArray is array (natural range <>) of NoteDetector;
+type NoteDetectorBins is array (natural range 0 to N_BINS - 1) of NoteDetectorArray(0 to BIN_SIZE - 1);
+type IndexArray is array (natural range <>) of natural range 0 to BIN_SIZE-1;
+constant NOTE_DETECTORS : NoteDetectorBins := (((k => 17, N => 23889, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 23889, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 22548, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 21282, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 20088, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 18960, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 17896, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 16892, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 15944, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 15049, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 14204, ledid => 0, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT))), ((k => 18, N => 13407, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 12655, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 11945, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 11274, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 10641, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 10044, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 9480, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 8948, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 8446, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 7972, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 7525, ledid => 1, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT))), ((k => 18, N => 7102, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 6704, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 6328, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 5973, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 5637, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 5321, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 5022, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 4740, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 4474, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 4223, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 3986, ledid => 2, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT))), ((k => 18, N => 3763, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 3551, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 3352, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 3164, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 2987, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 2819, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 2661, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 2511, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 2370, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 2237, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 2112, ledid => 3, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT))), ((k => 18, N => 1993, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1882, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1776, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1676, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1582, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1494, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1410, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1331, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1256, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1185, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 1119, ledid => 4, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT))), ((k => 18, N => 1056, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 997, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 941, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 888, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 838, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 791, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 747, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 705, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 666, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 628, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 593, ledid => 5, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT))), ((k => 18, N => 560, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 528, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 499, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 471, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 444, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 419, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 396, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 374, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 353, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 333, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 314, ledid => 6, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT))), ((k => 18, N => 297, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 280, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 264, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 250, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 236, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 222, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 210, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 198, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 187, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 177, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT)), (k => 18, N => 167, ledid => 7, threshold => to_sfixed(1000, MULTIPLIER_LEFT, MULTIPLIER_RIGHT))));
 constant MAX_STR_LEN : integer := 27;
 
 --Contains the current string being sent over uart.
@@ -111,17 +123,21 @@ signal led_send : std_logic;
 
 
 -- Goertzels
-signal madd_input : MultAddInput;
-signal madd_output : MultAddOutput;
 
-signal readies : std_ulogic_vector(4 downto 0);
+signal madd_input : MultAddInputArray(N_BINS-1 downto 0);
+signal madd_output : MultAddOutputArray(N_BINS-1 downto 0);
 
-constant GOERTZEL_B : positive := 7;
-constant GOERTZEL_F : positive := 11;
-signal goertzel_in_ready : std_ulogic;
-signal goertzel_out_data : FP;
-signal goertzel_out_valid : std_ulogic;
-signal goertzel_in_valid : std_ulogic := '0';
+type MultAddInputArrayBins is array (natural range 0 to N_BINS-1) of MultAddInputArray(0 to BIN_SIZE - 1);
+signal madd_mux_inputs : MultAddInputArrayBins;
+
+signal mscheduler_readies : std_ulogic_vector(N_DETECTORS-1 downto 0);
+signal mscheduler_start : std_ulogic := '0';
+signal mscheduler_outs : std_ulogic_vector(N_DETECTORS-1 downto 0);
+signal mscheduler_index : IndexArray(N_BINS - 1 downto 0);
+
+signal goertzel_in_ready : std_ulogic_vector(N_DETECTORS-1 downto 0);
+signal goertzel_out_data : FPArray(N_DETECTORS-1 downto 0);
+signal goertzel_out_valid : std_ulogic_vector(N_DETECTORS-1 downto 0);
 signal goertzel_in_data : FP;
 
 
@@ -149,39 +165,55 @@ i2s : entity work.I2SMaster port map (
     clk_out => i2s_clk_out
 );
 
-multiply_scheduler : entity work.RoundRobinScheduler
-generic map ( N => 5)
-port map (
-    clk => clk,
-    start => clk,
-    readies => readies
+detector_bins: for bi in NOTE_DETECTORS'left to NOTE_DETECTORS'right generate begin
+
+    multiply_scheduler : entity work.RoundRobinScheduler
+    generic map ( N => BIN_SIZE)
+    port map (
+        clk => clk,
+        start => mscheduler_start,
+        readies => mscheduler_readies((bi+1)*BIN_SIZE-1 downto bi*BIN_SIZE),
+        out_index => mscheduler_index(bi),
+        outs => mscheduler_outs((bi+1)*BIN_SIZE-1 downto bi*BIN_SIZE)
     );
-
-multiply_add : entity work.sfixed_multiplier
-port map (
-    clk => clk,
-    ins => madd_input,
-    outs => madd_output
-);
-
-goertzel0 : entity work.goertzel
-generic map(
-    N => 2376,
-    k => 27
-)
-port map(
-	clk => clk,
-	in_data => goertzel_in_data,
-	in_ready => goertzel_in_ready,
-	in_valid => goertzel_in_valid,
-	
-	out_data => goertzel_out_data,
-	out_valid => goertzel_out_valid,
-	
-	multaddin => madd_input,
-	multaddout => madd_output
-);
-
+    
+    
+    
+    multiply_add : entity work.sfixed_multiplier
+    port map (
+        clk => clk,
+        ins => madd_input(bi),
+        outs => madd_output(bi)
+    );
+    
+    
+    mscheduler_readies((bi+1)*BIN_SIZE-1 downto bi*BIN_SIZE) <= goertzel_in_ready((bi+1)*BIN_SIZE-1 downto bi*BIN_SIZE);
+    madd_input(bi) <= madd_mux_inputs(bi)(mscheduler_index(bi));
+ 
+    detectors : for i in 0 to BIN_SIZE-1 generate begin
+        
+        goertzel_instance : entity work.goertzel
+            generic map(
+                N => NOTE_DETECTORS(bi)(i).N,
+                k => NOTE_DETECTORS(bi)(i).k
+            )
+            port map(
+                clk => clk,
+                in_data => goertzel_in_data,
+                in_ready => goertzel_in_ready(bi*BIN_SIZE + i),
+                in_valid => mscheduler_outs(bi*BIN_SIZE + i),
+                
+                out_data => goertzel_out_data(bi*BIN_SIZE + i),
+                out_valid => goertzel_out_valid(bi*BIN_SIZE + i),
+                
+                multaddin => madd_mux_inputs(bi)(i),
+                multaddout => madd_output(bi)
+        );
+        
+        leds(NOTE_DETECTORS(bi)(i).ledid) <= (r => (others => '0'), g => (others => '0'), b => (others => '0'), w => (others => '1')) when goertzel_out_valid(bi*BIN_SIZE + i) = '1' and goertzel_out_data(bi*BIN_SIZE + i) > NOTE_DETECTORS(bi)(i).threshold else
+                                             (others => (others => '0'))                                                              when goertzel_out_valid(bi*BIN_SIZE + i) = '1';
+    end generate;
+end generate;
 
 led_strip : entity work.sk6812
 generic map (
@@ -214,11 +246,11 @@ begin
                     uart_str_send <= '0';
                 end if;
             when EoTX =>
-                if uart_state = WAIT_SEND and goertzel_out_valid = '1' then
-                    uart_str(3) <= to_slv(goertzel_out_data)(MULTIPLIER_WIDTH - 1 - 24 downto MULTIPLIER_WIDTH - 24 - 8);
-                    uart_str(2) <= to_slv(goertzel_out_data)(MULTIPLIER_WIDTH - 1 - 16 downto MULTIPLIER_WIDTH - 16 - 8);
-                    uart_str(1) <= to_slv(goertzel_out_data)(MULTIPLIER_WIDTH - 1 - 8  downto MULTIPLIER_WIDTH - 8  - 8);
-                    uart_str(0) <= to_slv(goertzel_out_data)(MULTIPLIER_WIDTH - 1      downto MULTIPLIER_WIDTH      - 8);
+                if uart_state = WAIT_SEND and goertzel_out_valid(0) = '1' then
+                    uart_str(3) <= to_slv(goertzel_out_data(1))(MULTIPLIER_WIDTH - 1 - 24 downto MULTIPLIER_WIDTH - 24 - 8);
+                    uart_str(2) <= to_slv(goertzel_out_data(1))(MULTIPLIER_WIDTH - 1 - 16 downto MULTIPLIER_WIDTH - 16 - 8);
+                    uart_str(1) <= to_slv(goertzel_out_data(1))(MULTIPLIER_WIDTH - 1 - 8  downto MULTIPLIER_WIDTH - 8  - 8);
+                    uart_str(0) <= to_slv(goertzel_out_data(1))(MULTIPLIER_WIDTH - 1      downto MULTIPLIER_WIDTH      - 8);
                     strEnd <= 4;
                     uart_str_send <= '1';
                     wait_state := SoTX;
@@ -265,9 +297,9 @@ begin
             
             conv2 := (MULTIPLIER_LEFT downto MULTIPLIER_LEFT - 18 + 1 => conv, others => '0');
             goertzel_in_data <= to_sfixed(conv2, MULTIPLIER_LEFT, MULTIPLIER_RIGHT);
-            goertzel_in_valid <= '1';
+            mscheduler_start <= '1';
         else
-            goertzel_in_valid <= '0';
+            mscheduler_start <= '0';
         end if;
     end if;
 end process;
@@ -356,7 +388,8 @@ end process;
 
 RsTx <= uart_tx;
 led(5 to 15) <= audio_sample(17 downto 7);
-led(0) <= '1' when goertzel_out_data > to_sfixed(2, MULTIPLIER_LEFT, MULTIPLIER_RIGHT) else '0';
+led(1 to 2) <= mscheduler_outs(1 downto 0);
+led(0) <= '1' when goertzel_out_data(1) > to_sfixed(2, MULTIPLIER_LEFT, MULTIPLIER_RIGHT) else '0';
 --led(4) <= '1' when debug_state = Sampling else '0';
 --led(3) <= '1' when debug_state = SendingSamples else '0';
 --led(2) <= '1' when debug_state = FFTFeeding else '0';

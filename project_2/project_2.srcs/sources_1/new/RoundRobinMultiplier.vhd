@@ -51,6 +51,7 @@ port (
     
     signal readies : in std_ulogic_vector(N-1 downto 0);
     
+    signal out_index : out natural range 0 to N-1 := 0;
     signal outs : out std_ulogic_vector(N-1 downto 0) := (others => '0')
 );
 end RoundRobinScheduler;
@@ -64,6 +65,7 @@ begin
 scheduler : process(clk)
 
 variable active : std_ulogic_vector(N-1 downto 0) := (others => '0');
+variable index : natural range 0 to N-1;
 type StateType is (Idle, WaitingStart, WaitingEnd);
 
 variable state : StateType := Idle;
@@ -78,6 +80,7 @@ if rising_edge(clk) then
                 state := WaitingStart;
                 active := active(N-2 downto 0) & '1';
                 outs <= active;
+                index := 0;
             end if;
         when WaitingStart =>
             if (active and readies) /= active then
@@ -94,12 +97,13 @@ if rising_edge(clk) then
                     active := active(N-2 downto 0) & '0';
                     outs <= active;
                     state := WaitingStart;
+                    index := index + 1;
                 end if;
             end if;
     end case;
 
 end if;
-
+out_index <= index;
 end process;
 
 

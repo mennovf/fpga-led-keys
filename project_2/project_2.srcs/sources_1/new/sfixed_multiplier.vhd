@@ -31,6 +31,7 @@ package SFixedMultiplierInterface is
     constant MULTIPLIER_RIGHT : integer := -MULTIPLIER_F;
     constant MULTIPLIER_WIDTH : positive := MULTIPLIER_B + MULTIPLIER_F;
     subtype FP is sfixed(MULTIPLIER_LEFT downto MULTIPLIER_RIGHT);
+    type FPArray is array (natural range <>) of FP;
     
     type MultAddInput is record
         a : FP;
@@ -45,6 +46,8 @@ package SFixedMultiplierInterface is
         valid : std_ulogic;
     end record;
     
+    type MultAddInputArray is array (natural range <>) of MultAddInput;
+    type MultAddOutputArray is array (natural range <>) of MultAddOutput;
 end package;
 
 library IEEE;
