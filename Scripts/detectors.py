@@ -1,5 +1,6 @@
 import math
 import sys
+import itertools as it
 
 LED_SPACING = 0.71
 WBR = 2.6
@@ -41,7 +42,7 @@ for fi, f in enumerate(FREQUENCIES):
 CHUNKN = 11
 THRESHOLD = 0.05
 start = True
-running_key_distance = -KEY_SPACINGS[0]
+running_key_distance = it.accumulate(it.cycle(KEY_SPACINGS), initial=0)
 
 seen = set()
 duplicates = []
@@ -57,8 +58,8 @@ for chunki, chunk in enumerate(parameters[i:i+CHUNKN] for i in range(0, len(para
     cstart = True
     for i, (k, N) in enumerate(chunk):
         index = chunki*CHUNKN + i
-        running_key_distance += KEY_SPACINGS[index % len(KEY_SPACINGS)]
-        ledid = round(running_key_distance / LED_SPACING)
+        key_distance = next(running_key_distance)
+        ledid = round(key_distance / LED_SPACING)
         if ledid in seen:
             duplicates.append(ledid)
         seen.add(ledid)
