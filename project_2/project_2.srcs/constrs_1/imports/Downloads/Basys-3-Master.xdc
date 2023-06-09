@@ -75,8 +75,8 @@ set_property -dict {PACKAGE_PIN L1 IOSTANDARD LVCMOS33} [get_ports {led[15]}]
 set_property -dict {PACKAGE_PIN J1 IOSTANDARD LVCMOS33} [get_ports i2s_lrcl]
 set_property -dict {PACKAGE_PIN L2 IOSTANDARD LVCMOS33} [get_ports i2s_din]
 set_property -dict {PACKAGE_PIN J2 IOSTANDARD LVCMOS33} [get_ports i2s_clk_out]
-#set_property -dict { PACKAGE_PIN G2   IOSTANDARD LVCMOS33 } [get_ports {JA[3]}];#Sch name = JA4
-set_property -dict {PACKAGE_PIN H1 IOSTANDARD LVCMOS33} [get_ports led_dout]
+set_property -dict { PACKAGE_PIN G2   IOSTANDARD LVCMOS33 } [get_ports led_dout];#Sch name = JA4
+#set_property -dict {PACKAGE_PIN H1 IOSTANDARD LVCMOS33} [get_ports led_dout]
 #set_property -dict { PACKAGE_PIN K2   IOSTANDARD LVCMOS33 } [get_ports {JA[5]}];#Sch name = JA8
 #set_property -dict { PACKAGE_PIN H2   IOSTANDARD LVCMOS33 } [get_ports {JA[6]}];#Sch name = JA9
 #set_property -dict { PACKAGE_PIN G3   IOSTANDARD LVCMOS33 } [get_ports {JA[7]}];#Sch name = JA10
