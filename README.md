@@ -75,12 +75,14 @@ The product of this sharing exercise is something in between an ALU and pure par
 ## Result
 Here is a demonstration of the final result.
 
-<video src="https://github.com/mennovf/fpga-led-keys/raw/master/readme/working.mp4"></video>
+[working.webm](https://github.com/mennovf/fpga-led-keys/assets/1986792/f721b140-8fd7-472c-91e5-4d8e70494aa9)
+
 
 There are some defects in this video that are immediately obvious. The main one is that often multiple LEDs light up when only key is being played. The first reason for this is that producing a note on a stringed instrument creates harmonics, which are integer multiples of the fundamental frequency. In many cases there is still enough energy in these harmonics to light up their associated LED.
 I implemented a crude correction of this by subtracting a fraction of the calculated power from the next octave up. The result is slightly better.
 
-<video src="https://github.com/mennovf/fpga-led-keys/raw/master/readme/better.mp4"></video>
+[better.webm](https://github.com/mennovf/fpga-led-keys/assets/1986792/ff3585db-1b89-489b-9385-cebcc27f3337)
+
 
 # Shortcomings or further work
 The result is far from perfect but since this is not meant as a polished project but just an excuse to learn, I'm not going to develop it further. These are some of the known shortcomings:
