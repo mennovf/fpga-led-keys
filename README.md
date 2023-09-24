@@ -30,7 +30,7 @@ Coding the FFT by hand would've too difficult and a bit out-of-scope for this pr
 The time-complexity of the FFT is well-known to be $Nlog(N)$ where $N$ is the amount of samples per window.  This really efficient compared to a naïve implementation of the DTFT where each sample requires $N$ multiplications and N additions (when the twiddle factors are constants calculated in advance).
 
 ### Issues
-- Due to how our ear works, the frequencies of notes are distributed exponentially [2]. This means we need to cover both a large range: 27.5Hz - 4186Hz, and small frequency resolution: the difference of the frequencies between the two lowest notes is ~2Hz.
+- Due to how our ear works, the frequencies of notes are distributed exponentially [^1]. This means we need to cover both a large range: 27.5Hz - 4186Hz, and small frequency resolution: the difference of the frequencies between the two lowest notes is ~2Hz.
    In the best case we can downsample to ~8.2kHz to still capture the highest frequency, and then we'd need at least $\frac{8200}{2} = 4100$  samples in the DTFT for the frequency resolution.
    This would mean a delay of $\frac{4100}{8200\textrm{Hz}}=0.5\textrm{s}$ before any note would show up in the LEDs. This is unacceptably slow.
    The fundamental issue here is that for the DTFT, the frequency resolution is determined by the sample count, but in the FFT this frequency resolution is the same for all frequencies. There is much more space in-between the upper frequencies which we can and should make us of to be faster.
@@ -42,12 +42,12 @@ The instinct to reach for the FFT and discussing the time-complexity came from m
 
 The power of an FPGA lies in its ability to do **a lot** of work in parallel. Whenever you're designing something for FPGAs this should be exploited: we can calculate the DTFT for every frequency of interest individually at the same time! This decouples the investigated frequencies from the frequency resolution.
 
-Turns out there's even a really nice algorithm to calculate this: the Goertzel algorithm. It's a FIR filter where we need to store only two past states, precalculate just one factor and if we're only interested in the power spectrum (we are [1]), we need only real math which simplifies the logic a whole lot.
+Turns out there's even a really nice algorithm to calculate this: the Goertzel algorithm. It's a FIR filter where we need to store only two past states, precalculate just one factor and if we're only interested in the power spectrum (we are [^2]), we need only real math which simplifies the logic a whole lot.
 
 ### Choosing N
 We now have to choose the amount of samples N for each frequency. Its value is subject to three constraints.
  1. The frequency-of-interest $f_i = k\frac{f_s}{N}$ is a multiple of the sampling frequency over $N$. We should choose $k$ and $N$ to closely match our $f_i$. For high accuracy we want N to be large.
-2. The DFT does not calculate the power of just a single frequency, but rather the contribution of region multiplied with the particular DFT window weighing. This weighing for a rectangular window can be seen here: ![DFT Weighing](readme/DFTtransfer.png "The intrinsic weighing of the DFT") For larger N, the range of influencing frequencies becomes smaller. For high precision we want N to be large.
+2. The DFT does not calculate the power of just a single frequency, but rather the contribution of region multiplied with the particular DFT window weighing. This weighing for a rectangular window can be seen here: ![DFT Weighing](https://raw.githubusercontent.com/mennovf/fpga-led-keys/master/readme/DFTtransfer.png "The intrinsic weighing of the DFT") For larger N, the range of influencing frequencies becomes smaller. For high precision we want N to be large.
 3. For a quick response to changes we want N to be small!
 
 I created a python script to determine $k$ and $N$ for me and export it to VHDL arrays. It determines them both based on an arbitrary required accuracy for $f_i$ and the known spacing between the frequencies of adjacent keys.
@@ -75,11 +75,12 @@ The product of this sharing exercise is something in between an ALU and pure par
 ## Result
 Here is a demonstration of the final result.
 
-![demonstration](readme/working.mp4 "Working demonstration of the project.")
+<video src="https://github.com/mennovf/fpga-led-keys/raw/master/readme/working.mp4"></video>
 
 There are some defects in this video that are immediately obvious. The main one is that often multiple LEDs light up when only key is being played. The first reason for this is that producing a note on a stringed instrument creates harmonics, which are integer multiples of the fundamental frequency. In many cases there is still enough energy in these harmonics to light up their associated LED.
 I implemented a crude correction of this by subtracting a fraction of the calculated power from the next octave up. The result is slightly better.
-![better](readme/better.mp4 "A slightly better demonstration of the project.")
+
+<video src="https://github.com/mennovf/fpga-led-keys/raw/master/readme/better.mp4"></video>
 
 # Shortcomings or further work
 The result is far from perfect but since this is not meant as a polished project but just an excuse to learn, I'm not going to develop it further. These are some of the known shortcomings:
@@ -90,5 +91,5 @@ The result is far from perfect but since this is not meant as a polished project
 # Lessons and questions
 I would love to know if there is anything I could have implemented more efficiently or whether there are best practices for the stuff I've done. Especially about the sharing of resources.
 
-[1]:  [Sound intensity is proportional to the square of the measured pressure](https://www.sfu.ca/~gotfrit/ZAP_Sept.3_99/s/sound_pressure.html)
-[2]:  $\textrm{freq}(\textrm{note}) \sim K \exp(\textrm{note})$ for some $K$. 
+[^1]:  $\textrm{freq}(\textrm{note}) \sim K \exp(\textrm{note})$ for some $K$.
+[^2]:  [Sound intensity is proportional to the square of the measured pressure](https://www.sfu.ca/~gotfrit/ZAP_Sept.3_99/s/sound_pressure.html)
