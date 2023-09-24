@@ -52,6 +52,7 @@ Port (
     signal in_ready : out std_ulogic := '1';
     
     signal out_data : out FP;
+    signal out_data_scaled : out FP;
     signal out_valid : out std_ulogic := '0';
     
     signal multaddin  : out MultAddInput := (valid => '0', others => (others=>'0'));
@@ -73,6 +74,7 @@ architecture Behavioral of goertzel is
     constant ONE  : FP := to_sfixed(1.0,  left, right);
     constant MONE : FP := to_sfixed(-1.0, left, right);
     constant ZERO : FP := to_sfixed(0, left, right);
+    --constant OCTAVE_SCALE : FP := to_sfixed(13.75, left, right); --Replaced by /16 (shift 4 bits)
 
 
     -- Multiply Add
@@ -202,6 +204,7 @@ begin
                         
                     when EndSample =>
                         out_data <= acc;
+                        out_data_scaled <= out_data_scaled srl 4;
                         out_valid <= '1';
                         in_ready <= '1';
                         s2 := (others => '0');

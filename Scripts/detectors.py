@@ -2,21 +2,28 @@ import math
 import sys
 import itertools as it
 
-LED_SPACING = 0.71
-WBR = 2.6
-BRW = 0.8
-WW = 2.25
-WBL = 0.864
-BLW = 1.296
+LED_SPACING = 0.68
+LED_STRIP_SPACING = 1.04
+LEDS_PER_STRIP = 72
+STRIP_LENGTH = (LEDS_PER_STRIP - 1)*LED_SPACING + LED_STRIP_SPACING
+WBR = 1.5
+BRW = 0.87
+WW = 2.4
+WBL = 0.87
+BLW = 1.5
 WBC = WW / 2
 BCW = WBC
 KEY_SPACINGS = (WBR, BRW, WW, WBL, BLW, WBR, BRW, WW, WBL, BLW, WBC, BCW)
 
 A4 = 440
-LOWEST_FREQUENCIES = [440/(2**4)*(2**(i/12)) for i in range(12)]
+A4N = 48
+START_NOTE = 15 # C2
+END_NOTE = 87
+START_FREQUENCY = A4 * 2**((START_NOTE - A4N)/12)
+LOWEST_FREQUENCIES = [START_FREQUENCY*2**(i/12) for i in range(12)]
 FREQUENCIES = LOWEST_FREQUENCIES
-for i in range(12, 88):
-    FREQUENCIES.append(2*FREQUENCIES[i - 12])
+for i in range(END_NOTE - START_NOTE - 12):
+    FREQUENCIES.append(2*FREQUENCIES[i])
 
 FS = 2500000 / 64
 
@@ -39,10 +46,13 @@ for fi, f in enumerate(FREQUENCIES):
             break
         N += 1
 
-CHUNKN = 11
+CHUNKN = 9
 THRESHOLD = 0.05
 start = True
-running_key_distance = it.accumulate(it.cycle(KEY_SPACINGS), initial=0)
+key_spacings = it.cycle(KEY_SPACINGS)
+for _ in range(START_NOTE):
+    next(key_spacings)
+running_key_distance = it.accumulate(key_spacings, initial=0)
 
 seen = set()
 duplicates = []
@@ -59,7 +69,13 @@ for chunki, chunk in enumerate(parameters[i:i+CHUNKN] for i in range(0, len(para
     for i, (k, N) in enumerate(chunk):
         index = chunki*CHUNKN + i
         key_distance = next(running_key_distance)
-        ledid = round(key_distance / LED_SPACING)
+
+        # Id of the nearest LED
+        skipped_strips = key_distance // STRIP_LENGTH
+        skipped_strips_length = skipped_strips * STRIP_LENGTH
+        distance_in_strip = key_distance - skipped_strips_length
+        ledid = int(round(distance_in_strip / LED_SPACING) + skipped_strips*LEDS_PER_STRIP)
+
         if ledid in seen:
             duplicates.append(ledid)
         seen.add(ledid)
@@ -76,4 +92,7 @@ if duplicates:
     print(f'Error: duplicate LED IDs={duplicates}', file=sys.stderr)
     sys.exit(-1)
 
+leftover = set(range(145)) - seen
+if leftover:
+    print(f'Unassigned LEDs: {leftover}')
 
